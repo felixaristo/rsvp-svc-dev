@@ -36,7 +36,11 @@ export class ResponseInterceptor implements NestInterceptor {
 
       for (const key in newData) {
         if (Object.prototype.hasOwnProperty.call(newData, key)) {
-          newData[key] = this.excludeTimestamps(newData[key]);
+          if (newData[key] === null) {
+            delete newData[key];
+          } else {
+            newData[key] = this.excludeTimestamps(newData[key]);
+          }
         }
       }
       return newData;
