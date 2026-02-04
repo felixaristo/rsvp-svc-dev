@@ -1,0 +1,46 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { UsersModule } from './modules/users/users.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { User } from './modules/users/entities/user.entity';
+import { Category } from './modules/table-categories/entities/category.entity';
+import { Table } from './modules/table-management/entities/table.entity';
+import { Promotion } from './modules/promotion/entities/promotion.entity';
+import { CategoryModule } from './modules/table-categories/category.module';
+import { TableModule } from './modules/table-management/table.module';
+import { PromotionModule } from './modules/promotion/promotion.module';
+import { RolesModule } from './modules/roles/roles.module';
+import { MenuCategoryModule } from './modules/menu-categories/menu-category.module';
+import { MenuModule } from './modules/menu-management/menu.module';
+import { MenuCategory } from './modules/menu-categories/entities/menu-category.entity';
+import { Menu } from './modules/menu-management/entities/menu.entity';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432', 10),
+      username: process.env.DB_USERNAME ?? 'postgres',
+      password: process.env.DB_PASSWORD ?? 'postgres',
+      database: process.env.DB_NAME || 'rsvp_db',
+      entities: [User, Category, Table, Promotion, MenuCategory, Menu],
+      synchronize: true,
+    }),
+    UsersModule,
+    AuthModule,
+    CategoryModule,
+    TableModule,
+    PromotionModule,
+    RolesModule,
+    MenuCategoryModule,
+    MenuModule,
+  ],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule {}
