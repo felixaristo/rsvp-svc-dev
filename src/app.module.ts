@@ -17,6 +17,10 @@ import { MenuCategoryModule } from './modules/menu-categories/menu-category.modu
 import { MenuModule } from './modules/menu-management/menu.module';
 import { MenuCategory } from './modules/menu-categories/entities/menu-category.entity';
 import { Menu } from './modules/menu-management/entities/menu.entity';
+import { CustomerModule } from './modules/customer/customer.module';
+import { Customer } from './modules/customer/entities/customer.entity';
+import { BookingModule } from './modules/booking/booking.module';
+import { Booking } from './modules/booking/entities/booking.entity';
 
 @Module({
   imports: [
@@ -28,7 +32,7 @@ import { Menu } from './modules/menu-management/entities/menu.entity';
       username: process.env.DB_USERNAME ?? 'postgres',
       password: process.env.DB_PASSWORD ?? 'postgres',
       database: process.env.DB_NAME || 'rsvp_db',
-      entities: [User, Category, Table, Promotion, MenuCategory, Menu],
+      entities: [User, Category, Table, Promotion, MenuCategory, Menu, Customer, Booking],
       synchronize: true,
     }),
     UsersModule,
@@ -39,6 +43,8 @@ import { Menu } from './modules/menu-management/entities/menu.entity';
     RolesModule,
     MenuCategoryModule,
     MenuModule,
+    CustomerModule,
+    BookingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
