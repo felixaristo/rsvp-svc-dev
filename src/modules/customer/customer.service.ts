@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, ILike } from 'typeorm';
 import { Customer } from './entities/customer.entity';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
@@ -17,13 +17,19 @@ export class CustomerService {
     return await this.customerRepository.save(customer);
   }
 
-  async findAll(page: number, limit: number): Promise<{ data: any[]; total: number; page: number; limit: number }> {
+  async findAll(page: number, limit: number, search?: string): Promise<{ data: any[]; total: number; page: number; limit: number }> {
+    const where: any = {};
+    if (search) {
+      where.fullname = ILike(`%${search}%`);
+    }
+
     const [data, total] = await this.customerRepository.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
       order: {
         id: 'DESC',
       },
+      where,
     });
 
     const enrichedData = data.map(customer => ({

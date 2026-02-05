@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe, Query } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { CustomerService } from './customer.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
@@ -20,11 +20,13 @@ export class CustomerController {
   @Get(':page/:limit')
   @ApiParam({ name: 'page', required: true, type: Number })
   @ApiParam({ name: 'limit', required: true, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
   findAll(
     @Param('page', ParseIntPipe) page: number,
     @Param('limit', ParseIntPipe) limit: number,
+    @Query('search') search?: string,
   ) {
-    return this.customerService.findAll(page, limit);
+    return this.customerService.findAll(page, limit, search);
   }
 
   @Get(':id')
