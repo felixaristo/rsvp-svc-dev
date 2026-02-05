@@ -1,9 +1,13 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { Reflector } from '@nestjs/core';
+import { KEEP_NULLS_KEY } from '../decorators/keep-nulls.decorator';
 
 @Injectable()
 export class ResponseInterceptor implements NestInterceptor {
+  constructor(private reflector: Reflector) {}
+
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const req = context.switchToHttp().getRequest();
     const method = req.method;
@@ -11,18 +15,24 @@ export class ResponseInterceptor implements NestInterceptor {
     if (method === 'POST') message = 'Created';
     else if (method === 'PATCH' || method === 'PUT') message = 'Updated';
     else if (method === 'DELETE') message = 'Deleted';
+
+    const keepNulls = this.reflector.getAllAndOverride<boolean>(KEEP_NULLS_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
     return next.handle().pipe(
       map((data) => ({
         status: 'success',
         message,
-        data: this.excludeTimestamps(data),
+        data: this.excludeTimestamps(data, keepNulls),
       })),
     );
   }
 
-  private excludeTimestamps(data: any): any {
+  private excludeTimestamps(data: any, keepNulls = false): any {
     if (Array.isArray(data)) {
-      return data.map((item) => this.excludeTimestamps(item));
+      return data.map((item) => this.excludeTimestamps(item, keepNulls));
     } else if (data !== null && typeof data === 'object') {
       if (data instanceof Date) return data;
 
@@ -37,9 +47,9 @@ export class ResponseInterceptor implements NestInterceptor {
       for (const key in newData) {
         if (Object.prototype.hasOwnProperty.call(newData, key)) {
           if (newData[key] === null) {
-            delete newData[key];
+            if (!keepNulls) delete newData[key];
           } else {
-            newData[key] = this.excludeTimestamps(newData[key]);
+            newData[key] = this.excludeTimestamps(newData[key], keepNulls);
           }
         }
       }
