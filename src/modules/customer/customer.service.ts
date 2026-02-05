@@ -17,13 +17,13 @@ export class CustomerService {
     return await this.customerRepository.save(customer);
   }
 
-  async findAll(page: number, limit: number, search?: string): Promise<{ data: any[]; total: number; page: number; limit: number }> {
+  async findAll(page: number, limit: number, search?: string): Promise<{ items: Customer[]; total: number; page: number; limit: number }> {
     const where: any = {};
     if (search) {
       where.fullname = ILike(`%${search}%`);
     }
 
-    const [data, total] = await this.customerRepository.findAndCount({
+    const [items, total] = await this.customerRepository.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
       order: {
@@ -32,13 +32,13 @@ export class CustomerService {
       where,
     });
 
-    const enrichedData = data.map(customer => ({
+    const enrichedItems = items.map(customer => ({
       ...customer,
       visit_time: 5,
     }));
 
     return {
-      data: enrichedData,
+      items: enrichedItems,
       total,
       page,
       limit
