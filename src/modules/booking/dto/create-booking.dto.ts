@@ -1,7 +1,21 @@
-import { IsNotEmpty, IsOptional, IsString, IsNumber, IsEnum, IsArray, IsDateString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsNumber, IsEnum, IsArray, ValidateNested } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BookingStatus } from '../entities/booking.entity';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+
+export class CreateBookingMenuItemDto {
+  @ApiProperty({ example: 1 })
+  @IsNotEmpty()
+  @Transform(({ value }) => parseInt(value))
+  @IsNumber()
+  menuId: number;
+
+  @ApiProperty({ example: 2 })
+  @IsNotEmpty()
+  @Transform(({ value }) => parseInt(value))
+  @IsNumber()
+  qty: number;
+}
 
 export class CreateBookingDto {
   @ApiProperty({ example: 1 })
@@ -15,7 +29,7 @@ export class CreateBookingDto {
   @IsString()
   date: string;
 
-  @ApiProperty({ example: '18:00' })
+  @ApiProperty({ example: '07:00 PM' })
   @IsNotEmpty()
   @IsString()
   time: string;
@@ -37,16 +51,10 @@ export class CreateBookingDto {
   @IsNumber()
   tableId: number;
 
-  @ApiPropertyOptional({ example: [1, 2], type: [Number] })
+  @ApiPropertyOptional({ example: '[{"menuId":1,"qty":2}]' })
   @IsOptional()
-  @IsArray()
-  @Transform(({ value }) => {
-    if (typeof value === 'string') {
-      return value.split(',').map((v: string) => parseInt(v.trim()));
-    }
-    return value;
-  })
-  menuIds?: number[];
+  @IsString()
+  menus?: string;
 
   @ApiPropertyOptional({ enum: BookingStatus, default: BookingStatus.WAITING_LIST })
   @IsOptional()

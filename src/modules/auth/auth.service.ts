@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import * as fs from 'fs';
 
 @Injectable()
 export class AuthService {
@@ -36,10 +37,16 @@ export class AuthService {
   }
 
   async register(userDto: any) {
-    const hashedPassword = await bcrypt.hash(userDto.password, 10);
-    return this.usersService.create({
-      ...userDto,
-      password: hashedPassword,
-    });
+    try {
+      const hashedPassword = await bcrypt.hash(userDto.password, 10);
+      return await this.usersService.create({
+        ...userDto,
+        password: hashedPassword,
+      });
+    } catch (error) {
+      require('fs').writeFileSync('error.log', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+      console.error('Registration error:', error);
+      throw error;
+    }
   }
 }

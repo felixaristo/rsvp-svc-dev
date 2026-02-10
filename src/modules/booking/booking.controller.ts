@@ -22,8 +22,8 @@ function filenameGenerator(_req: any, file: any, cb: (error: Error | null, filen
 }
 
 @ApiTags('Booking')
-@ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
+// @ApiBearerAuth()
+// @UseGuards(AuthGuard('jwt'))
 @Controller('booking')
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
@@ -43,6 +43,7 @@ export class BookingController {
     }),
   )
   create(@UploadedFile() file: any, @Body() createBookingDto: CreateBookingDto) {
+    console.log('Controller received DTO:', JSON.stringify(createBookingDto));
     const photoPath = file ? path.relative(process.cwd(), file.path) : undefined;
     return this.bookingService.create(createBookingDto, photoPath);
   }

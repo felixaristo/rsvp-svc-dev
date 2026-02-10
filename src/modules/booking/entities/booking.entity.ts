@@ -1,7 +1,7 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToOne, ManyToMany, JoinTable, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { Customer } from '../../customer/entities/customer.entity';
 import { Table } from '../../table-management/entities/table.entity';
-import { Menu } from '../../menu-management/entities/menu.entity';
+import { BookingMenu } from './booking-menu.entity';
 
 export enum BookingStatus {
   WAITING_LIST = 'waiting_list',
@@ -16,6 +16,9 @@ export class Booking {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ name: 'booking_code', unique: true, length: 6, nullable: true })
+  bookingCode: string;
+
   @ManyToOne(() => Customer, { nullable: false })
   @JoinColumn({ name: 'customer_id' })
   customer: Customer;
@@ -23,7 +26,7 @@ export class Booking {
   @Column({ type: 'date' })
   date: string;
 
-  @Column({ type: 'time' })
+  @Column({ type: 'varchar', length: 20, nullable: true })
   time: string;
 
   @Column({ name: 'total_pax' })
@@ -39,13 +42,8 @@ export class Booking {
   @JoinColumn({ name: 'table_id' })
   table: Table;
 
-  @ManyToMany(() => Menu)
-  @JoinTable({
-    name: 'booking_menus',
-    joinColumn: { name: 'booking_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'menu_id', referencedColumnName: 'id' },
-  })
-  menus: Menu[];
+  @OneToMany(() => BookingMenu, (bookingMenu) => bookingMenu.booking, { cascade: true })
+  bookingMenus: BookingMenu[];
 
   @Column({
     type: 'enum',
