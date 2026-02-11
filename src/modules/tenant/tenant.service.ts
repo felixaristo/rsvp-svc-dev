@@ -56,6 +56,17 @@ export class TenantService {
     return tenant;
   }
 
+  async forMicrosite(id: number): Promise<Tenant> {
+    const tenant = await this.tenantRepository.findOne({
+      where: { id },
+      select: ['id', 'primaryColor', 'secondaryColor', 'buttonHoverColor', 'logo', 'name', 'description', 'address', 'phone', 'email', 'website', 'layout'],
+    });
+    if (!tenant) {
+      throw new NotFoundException(`Tenant with ID ${id} not found`);
+    }
+    return tenant;
+  }
+
   async update(id: number, updateTenantDto: UpdateTenantDto, logoPath?: string): Promise<Tenant> {
     const tenant = await this.findOne(id);
     const updatedTenant = {

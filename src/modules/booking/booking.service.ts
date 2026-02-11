@@ -43,9 +43,13 @@ export class BookingService {
         throw new NotFoundException(`Customer with ID ${customerId} not found`);
       }
 
-      const table = await this.tableRepository.findOne({ where: { id: tableId } });
-      if (!table) {
-        throw new NotFoundException(`Table with ID ${tableId} not found`);
+      let table: Table | undefined;
+      if (tableId) {
+        const foundTable = await this.tableRepository.findOne({ where: { id: tableId } });
+        if (!foundTable) {
+          throw new NotFoundException(`Table with ID ${tableId} not found`);
+        }
+        table = foundTable;
       }
 
       const booking = this.bookingRepository.create({

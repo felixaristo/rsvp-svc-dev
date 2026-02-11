@@ -38,7 +38,7 @@ export class Booking {
   @Column({ name: 'downpayment_proof', nullable: true })
   downpaymentProof: string;
 
-  @ManyToOne(() => Table, { nullable: false })
+  @ManyToOne(() => Table, { nullable: true })
   @JoinColumn({ name: 'table_id' })
   table: Table;
 

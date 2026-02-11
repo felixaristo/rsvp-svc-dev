@@ -53,6 +53,18 @@ export class CustomerService {
     return customer;
   }
 
+  async findByPhoneOrInstagram(phone: string, instagram?: string): Promise<Customer | null> {
+    const whereConditions: any[] = [{ phone }];
+    
+    if (instagram) {
+      whereConditions.push({ instagram });
+    }
+
+    return await this.customerRepository.findOne({
+      where: whereConditions
+    });
+  }
+
   async update(id: number, updateCustomerDto: UpdateCustomerDto): Promise<Customer> {
     const customer = await this.findOne(id);
     const updatedCustomer = Object.assign(customer, updateCustomerDto);

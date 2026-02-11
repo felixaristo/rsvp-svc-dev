@@ -24,6 +24,7 @@ import { Booking } from './modules/booking/entities/booking.entity';
 import { BookingMenu } from './modules/booking/entities/booking-menu.entity';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { Tenant } from './modules/tenant/entities/tenant.entity';
+import { MicrositeModule } from './modules/microsite/microsite.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { Tenant } from './modules/tenant/entities/tenant.entity';
     CustomerModule,
     BookingModule,
     TenantModule,
+    MicrositeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

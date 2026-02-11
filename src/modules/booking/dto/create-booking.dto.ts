@@ -45,16 +45,15 @@ export class CreateBookingDto {
   @IsString()
   note?: string;
 
-  @ApiProperty({ example: 1 })
-  @IsNotEmpty()
-  @Transform(({ value }) => parseInt(value))
+  @ApiPropertyOptional({ example: 1 })
+  @IsOptional()
+  @Transform(({ value }) => value ? parseInt(value) : undefined)
   @IsNumber()
-  tableId: number;
+  tableId?: number;
 
   @ApiPropertyOptional({ example: '[{"menuId":1,"qty":2}]' })
   @IsOptional()
-  @IsString()
-  menus?: string;
+  menus?: any;
 
   @ApiPropertyOptional({ enum: BookingStatus, default: BookingStatus.WAITING_LIST })
   @IsOptional()

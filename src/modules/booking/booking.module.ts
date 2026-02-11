@@ -11,5 +11,6 @@ import { Menu } from '../menu-management/entities/menu.entity';
   imports: [TypeOrmModule.forFeature([Booking, Customer, Table, Menu])],
   controllers: [BookingController],
   providers: [BookingService],
+  exports: [BookingService],
 })
 export class BookingModule {}
