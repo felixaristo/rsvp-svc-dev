@@ -12,5 +12,6 @@ import { MenuCategoryModule } from '../menu-categories/menu-category.module';
   ],
   controllers: [MenuController],
   providers: [MenuService],
+  exports: [MenuService],
 })
 export class MenuModule {}

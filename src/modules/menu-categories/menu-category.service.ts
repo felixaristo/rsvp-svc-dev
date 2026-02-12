@@ -28,6 +28,10 @@ export class MenuCategoryService {
     return { items, total, page, limit };
   }
 
+  async getAll(): Promise<MenuCategory[]> {
+    return this.repo.find({ order: { name: 'ASC' } });
+  }
+
   async findOne(id: number): Promise<MenuCategory> {
     const category = await this.repo.findOne({ where: { id } });
     if (!category) {

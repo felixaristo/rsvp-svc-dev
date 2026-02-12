@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThanOrEqual } from 'typeorm';
 import { Promotion } from './entities/promotion.entity';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
@@ -21,6 +21,15 @@ export class PromotionService {
       toDate: new Date(dto.to_date),
     });
     return this.repo.save(entity);
+  }
+
+  async findActive(): Promise<Promotion[]> {
+    return this.repo.find({
+      where: {
+        toDate: MoreThanOrEqual(new Date()),
+      },
+      order: { id: 'DESC' },
+    });
   }
 
   async findAll(page = 1, limit = 10): Promise<{ items: Promotion[]; total: number; page: number; limit: number }> {

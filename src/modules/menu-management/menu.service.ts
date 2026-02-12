@@ -38,6 +38,26 @@ export class MenuService {
     return { items, total, page, limit };
   }
 
+  async findAllActive(): Promise<Menu[]> {
+    return this.repo.find({
+      relations: ['category'],
+      order: { category: { name: 'ASC' }, name: 'ASC' },
+    });
+  }
+
+  async findByCategory(categoryId: number, page: number, limit: number): Promise<{ items: Menu[]; total: number; page: number; limit: number }> {
+    const take = limit;
+    const skip = (page - 1) * take;
+    const [items, total] = await this.repo.findAndCount({
+      where: { category: { id: categoryId } },
+      relations: ['category'],
+      take,
+      skip,
+      order: { name: 'ASC' },
+    });
+    return { items, total, page, limit };
+  }
+
   async findOne(id: number): Promise<Menu> {
     const menu = await this.repo.findOne({ 
       where: { id },
