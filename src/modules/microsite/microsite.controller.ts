@@ -30,19 +30,16 @@ export class MicrositeController {
   }
 
   @Get('promotions')
-  @ApiOperation({ summary: 'Get active promotions' })
   getPromotions() {
     return this.micrositeService.getPromotions();
   }
 
   @Get('menu-categories')
-  @ApiOperation({ summary: 'Get all menu categories' })
   getMenuCategories() {
     return this.micrositeService.getMenuCategories();
   }
 
   @Get('menus')
-  @ApiOperation({ summary: 'Get menus by category' })
   @ApiQuery({ name: 'categoryId', required: true, type: Number })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
