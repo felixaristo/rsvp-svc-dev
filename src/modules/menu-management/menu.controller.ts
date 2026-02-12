@@ -8,6 +8,7 @@ import * as path from 'path';
 import { MenuService } from './menu.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
+import { KeepNulls } from '../../common/decorators/keep-nulls.decorator';
 
 function ensureDir(dir: string) {
   if (!fs.existsSync(dir)) {
@@ -61,13 +62,15 @@ export class MenuController {
   }
 
   @Get(':page/:limit')
+  @KeepNulls()
   findAll(@Param('page', ParseIntPipe) page: number, @Param('limit', ParseIntPipe) limit: number) {
     return this.service.findAll(page, limit);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.service.findOne(id);
+  @KeepNulls()
+  findOne(@Param('id') id: string) {
+    return this.service.findOne(+id);
   }
 
   @Patch(':id')

@@ -4,6 +4,7 @@ import { ApiTags, ApiHeader, ApiOperation, ApiConsumes, ApiBody, ApiQuery } from
 import { MicrositeService } from './microsite.service';
 import { CreateMicrositeBookingDto } from './dto/create-microsite-booking.dto';
 import { PublicApiKeyGuard } from '../../common/guards/public-api-key.guard';
+import { KeepNulls } from '../../common/decorators/keep-nulls.decorator';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import * as path from 'path';
@@ -30,6 +31,7 @@ export class MicrositeController {
   }
 
   @Get('promotions')
+  @KeepNulls()
   getPromotions() {
     return this.micrositeService.getPromotions();
   }
@@ -43,6 +45,7 @@ export class MicrositeController {
   @ApiQuery({ name: 'categoryId', required: true, type: Number })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
+  @KeepNulls()
   getMenus(
     @Query('categoryId') categoryId: number,
     @Query('page') page: number = 1,
