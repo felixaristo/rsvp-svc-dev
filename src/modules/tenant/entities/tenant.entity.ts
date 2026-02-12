@@ -1,11 +1,12 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
+import { FileUrlTransformer } from '../../../common/transformers/file-url.transformer';
 
 @Entity('tenant')
 export class Tenant {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, transformer: new FileUrlTransformer() })
   logo: string;
 
   @Column()

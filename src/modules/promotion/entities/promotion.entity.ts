@@ -1,11 +1,12 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
+import { FileUrlTransformer } from '../../../common/transformers/file-url.transformer';
 
 @Entity()
 export class Promotion {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ transformer: new FileUrlTransformer() })
   photo: string;
 
   @Column()

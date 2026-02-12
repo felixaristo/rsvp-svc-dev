@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { MenuCategory } from '../../menu-categories/entities/menu-category.entity';
+import { FileUrlTransformer } from '../../../common/transformers/file-url.transformer';
 
 @Entity('menu')
 export class Menu {
@@ -9,7 +10,7 @@ export class Menu {
   @Column()
   name: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, transformer: new FileUrlTransformer() })
   photo: string;
 
   @Column({ type: 'text', nullable: true })

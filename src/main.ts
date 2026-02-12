@@ -16,7 +16,9 @@ async function bootstrap() {
     optionsSuccessStatus: 204,
   });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  app.useStaticAssets(path.join(process.cwd(), 'uploads'));
+  app.useStaticAssets(path.join(process.cwd(), 'uploads'), {
+    prefix: '/uploads/',
+  });
   app.useGlobalInterceptors(new ResponseInterceptor(new Reflector()));
   app.useGlobalFilters(new HttpExceptionFilter());
   const config = new DocumentBuilder()
