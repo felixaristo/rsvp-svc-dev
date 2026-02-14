@@ -2,6 +2,7 @@ import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateCol
 import { Customer } from '../../customer/entities/customer.entity';
 import { Table } from '../../table-management/entities/table.entity';
 import { BookingMenu } from './booking-menu.entity';
+import { FileUrlTransformer } from '../../../common/transformers/file-url.transformer';
 
 export enum BookingStatus {
   WAITING_LIST = 'waiting_list',
@@ -35,8 +36,17 @@ export class Booking {
   @Column({ type: 'text', nullable: true })
   note: string;
 
-  @Column({ name: 'downpayment_proof', nullable: true })
+  @Column({ name: 'downpayment_proof', nullable: true, transformer: new FileUrlTransformer() })
   downpaymentProof: string;
+
+  @Column({ name: 'spend_money', type: 'decimal', nullable: true })
+  spendMoney: number;
+
+  @Column({ name: 'expected_leave_time', type: 'varchar', nullable: true })
+  expectedLeaveTime: string;
+
+  @Column({ name: 'leave_time', type: 'varchar', nullable: true })
+  leaveTime: string;
 
   @ManyToOne(() => Table, { nullable: true })
   @JoinColumn({ name: 'table_id' })

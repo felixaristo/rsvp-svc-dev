@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UploadedFile, UseInterceptors, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UploadedFile, UseInterceptors, UseGuards, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -8,6 +8,7 @@ import * as path from 'path';
 import { BookingService } from './booking.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
+import { GetBookingsFilterDto } from './dto/get-bookings-filter.dto';
 
 function ensureDir(dir: string) {
   if (!fs.existsSync(dir)) {
@@ -22,8 +23,8 @@ function filenameGenerator(_req: any, file: any, cb: (error: Error | null, filen
 }
 
 @ApiTags('Booking')
-// @ApiBearerAuth()
-// @UseGuards(AuthGuard('jwt'))
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'))
 @Controller('booking')
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
@@ -54,8 +55,9 @@ export class BookingController {
   findAll(
     @Param('page', ParseIntPipe) page: number,
     @Param('limit', ParseIntPipe) limit: number,
+    @Query() filterDto: GetBookingsFilterDto,
   ) {
-    return this.bookingService.findAll(page, limit);
+    return this.bookingService.findAll(page, limit, filterDto);
   }
 
   @Get(':id')

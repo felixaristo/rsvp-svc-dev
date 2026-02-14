@@ -80,4 +80,23 @@ export class CreateTenantDto {
   @IsOptional()
   @IsString()
   buttonHoverColor?: string;
+
+  @ApiPropertyOptional({ example: '08:00' })
+  @IsOptional()
+  @IsString()
+  openHours?: string;
+
+  @ApiPropertyOptional({ example: '22:00' })
+  @IsOptional()
+  @IsString()
+  closedHours?: string;
+
+  @ApiPropertyOptional({ example: 'OPEN', description: 'OPEN or CLOSED' })
+  @IsOptional()
+  @IsString()
+  status?: string;
+
+  @ApiPropertyOptional({ example: 90, description: 'Stay duration in minutes' })
+  @IsOptional()
+  stayDuration?: number;
 }

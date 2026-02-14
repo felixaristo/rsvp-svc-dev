@@ -63,4 +63,10 @@ export class CreateBookingDto {
   @ApiPropertyOptional({ type: 'string', format: 'binary' })
   @IsOptional()
   downpaymentProof?: any;
+
+  @ApiPropertyOptional({ example: 100000 })
+  @IsOptional()
+  @Transform(({ value }) => value ? parseFloat(value) : undefined)
+  @IsNumber()
+  spendMoney?: number;
 }

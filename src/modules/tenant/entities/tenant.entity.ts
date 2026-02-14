@@ -54,6 +54,18 @@ export class Tenant {
   @Column({ name: 'button_hover_color', nullable: true })
   buttonHoverColor: string;
 
+  @Column({ name: 'open_hours', nullable: true })
+  openHours: string;
+
+  @Column({ name: 'closed_hours', nullable: true })
+  closedHours: string;
+
+  @Column({ default: 'OPEN' })
+  status: string;
+
+  @Column({ name: 'stay_duration', nullable: true })
+  stayDuration: number;
+
   @CreateDateColumn({ name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 

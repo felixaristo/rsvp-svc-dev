@@ -10,5 +10,10 @@ export class CreateTableDto {
   @ApiProperty()
   @IsInt()
   @IsPositive()
+  covers: number;
+
+  @ApiProperty()
+  @IsInt()
+  @IsPositive()
   categoryId: number;
 }

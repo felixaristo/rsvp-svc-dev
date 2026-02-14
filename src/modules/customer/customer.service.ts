@@ -1,15 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, ILike } from 'typeorm';
+import { Repository, ILike, Between, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
 import { Customer } from './entities/customer.entity';
+import { Booking } from '../booking/entities/booking.entity';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
+import { GetCustomersFilterDto } from './dto/get-customers-filter.dto';
 
 @Injectable()
 export class CustomerService {
   constructor(
     @InjectRepository(Customer)
     private readonly customerRepository: Repository<Customer>,
+    @InjectRepository(Booking)
+    private readonly bookingRepository: Repository<Booking>,
   ) {}
 
   async create(createCustomerDto: CreateCustomerDto): Promise<Customer> {
@@ -17,10 +21,20 @@ export class CustomerService {
     return await this.customerRepository.save(customer);
   }
 
-  async findAll(page: number, limit: number, search?: string): Promise<{ items: Customer[]; total: number; page: number; limit: number }> {
+  async findAll(page: number, limit: number, filterDto?: GetCustomersFilterDto): Promise<{ items: Customer[]; total: number; page: number; limit: number }> {
+    const { search, fromDate, toDate } = filterDto || {};
     const where: any = {};
+    
     if (search) {
       where.fullname = ILike(`%${search}%`);
+    }
+
+    if (fromDate && toDate) {
+      where.createdAt = Between(fromDate, toDate);
+    } else if (fromDate) {
+      where.createdAt = MoreThanOrEqual(fromDate);
+    } else if (toDate) {
+      where.createdAt = LessThanOrEqual(toDate);
     }
 
     const [items, total] = await this.customerRepository.findAndCount({
@@ -63,6 +77,29 @@ export class CustomerService {
     return await this.customerRepository.findOne({
       where: whereConditions
     });
+  }
+
+  async findBookings(customerId: number, page: number, limit: number): Promise<{ items: Booking[]; total: number; page: number; limit: number }> {
+    // Ensure customer exists
+    await this.findOne(customerId);
+
+    const [items, total] = await this.bookingRepository.findAndCount({
+      where: { customer: { id: customerId } },
+      skip: (page - 1) * limit,
+      take: limit,
+      relations: ['table', 'bookingMenus', 'bookingMenus.menu'],
+      order: {
+        date: 'DESC',
+        time: 'DESC',
+      },
+    });
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+    };
   }
 
   async update(id: number, updateCustomerDto: UpdateCustomerDto): Promise<Customer> {

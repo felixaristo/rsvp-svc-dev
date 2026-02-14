@@ -9,6 +9,9 @@ export class Table {
   @Column()
   number: string;
 
+  @Column({ default: 1 })
+  covers: number;
+
   @ManyToOne(() => Category, { nullable: false })
   @JoinColumn({ name: 'categoryId' })
   category: Category;

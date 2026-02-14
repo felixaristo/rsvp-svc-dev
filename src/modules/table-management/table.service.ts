@@ -18,7 +18,7 @@ export class TableService {
   async create(dto: CreateTableDto): Promise<Table> {
     const category = await this.categoryRepo.findOne({ where: { id: dto.categoryId } });
     if (!category) throw new NotFoundException('Category not found');
-    const entity = this.repo.create({ number: dto.number, category });
+    const entity = this.repo.create({ number: dto.number, covers: dto.covers, category });
     return this.repo.save(entity);
   }
 
@@ -38,6 +38,7 @@ export class TableService {
     const entity = await this.findOne(id);
     if (!entity) return null;
     if (dto.number !== undefined) entity.number = dto.number;
+    if (dto.covers !== undefined) entity.covers = dto.covers;
     if (dto.categoryId !== undefined) {
       const category = await this.categoryRepo.findOne({ where: { id: dto.categoryId } });
       if (!category) throw new NotFoundException('Category not found');

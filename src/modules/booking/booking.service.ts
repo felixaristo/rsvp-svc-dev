@@ -1,13 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, Between, MoreThanOrEqual, LessThanOrEqual, FindOptionsWhere } from 'typeorm';
 import { Booking, BookingStatus } from './entities/booking.entity';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
+import { GetBookingsFilterDto } from './dto/get-bookings-filter.dto';
 import { Customer } from '../customer/entities/customer.entity';
 import { Table } from '../table-management/entities/table.entity';
 import { Menu } from '../menu-management/entities/menu.entity';
 import { BookingMenu } from './entities/booking-menu.entity';
+import { TenantService } from '../tenant/tenant.service';
 
 @Injectable()
 export class BookingService {
@@ -20,6 +22,7 @@ export class BookingService {
     private readonly tableRepository: Repository<Table>,
     @InjectRepository(Menu)
     private readonly menuRepository: Repository<Menu>,
+    private readonly tenantService: TenantService,
   ) {}
 
   private generateBookingCode(length = 6): string {
@@ -110,10 +113,26 @@ export class BookingService {
     }
   }
 
-  async findAll(page: number, limit: number): Promise<{ items: Booking[]; total: number; page: number; limit: number }> {
+  async findAll(page: number, limit: number, filterDto?: GetBookingsFilterDto): Promise<{ items: Booking[]; total: number; page: number; limit: number }> {
+    const { fromDate, toDate, status } = filterDto || {};
+    const where: any = {};
+
+    if (fromDate && toDate) {
+      where.date = Between(fromDate, toDate);
+    } else if (fromDate) {
+      where.date = MoreThanOrEqual(fromDate);
+    } else if (toDate) {
+      where.date = LessThanOrEqual(toDate);
+    }
+
+    if (status) {
+      where.status = status;
+    }
+
     const [items, total] = await this.bookingRepository.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
+      where,
       relations: ['customer', 'table', 'bookingMenus', 'bookingMenus.menu'],
       order: {
         id: 'DESC',
@@ -142,6 +161,89 @@ export class BookingService {
   async update(id: number, updateBookingDto: UpdateBookingDto, photoPath?: string): Promise<Booking> {
     const booking = await this.findOne(id);
     const { customerId, tableId, menus, ...bookingData } = updateBookingDto;
+
+    // Handle status changes for leave times
+    if (bookingData.status && bookingData.status !== booking.status) {
+      if (bookingData.status === BookingStatus.CONFIRM) {
+        try {
+          const tenant = await this.tenantService.forMicrosite(1);
+          if (tenant.stayDuration) {
+            let bookingDateStr: string;
+            
+            // Handle booking.date being Date object or string
+            if ((booking.date as any) instanceof Date) {
+              const d = booking.date as any as Date;
+              const year = d.getFullYear();
+              const month = String(d.getMonth() + 1).padStart(2, '0');
+              const day = String(d.getDate()).padStart(2, '0');
+              bookingDateStr = `${year}-${month}-${day}`;
+            } else {
+              bookingDateStr = String(booking.date);
+            }
+
+            // Normalize time string
+            const timeStr = booking.time.trim();
+            let hours: number;
+            let minutes: number;
+
+            if (timeStr.toLowerCase().includes('m')) { // AM/PM format
+               const [timePart, modifier] = timeStr.split(' ');
+               const [hStr, mStr] = timePart.split(':');
+               hours = parseInt(hStr, 10);
+               minutes = parseInt(mStr, 10);
+               
+               if (modifier && modifier.toLowerCase() === 'pm' && hours < 12) {
+                 hours += 12;
+               }
+               if (modifier && modifier.toLowerCase() === 'am' && hours === 12) {
+                 hours = 0;
+               }
+            } else { // 24h format
+               const [hStr, mStr] = timeStr.split(':');
+               hours = parseInt(hStr, 10);
+               minutes = parseInt(mStr, 10);
+            }
+
+            const [yearStr, monthStr, dayStr] = bookingDateStr.split('-');
+             const bookingDateTime = new Date(
+               parseInt(yearStr, 10),
+               parseInt(monthStr, 10) - 1,
+               parseInt(dayStr, 10),
+               hours,
+               minutes,
+               0
+             );
+
+             if (!isNaN(bookingDateTime.getTime())) {
+               const expectedLeaveDate = new Date(bookingDateTime.getTime() + tenant.stayDuration * 60000);
+               let hours = expectedLeaveDate.getHours();
+               const minutes = expectedLeaveDate.getMinutes();
+               const ampm = hours >= 12 ? 'PM' : 'AM';
+               hours = hours % 12;
+               hours = hours ? hours : 12; // the hour '0' should be '12'
+               const hoursStr = String(hours).padStart(2, '0');
+               const minutesStr = String(minutes).padStart(2, '0');
+               booking.expectedLeaveTime = `${hoursStr}:${minutesStr} ${ampm}`;
+               console.log(`Calculated expectedLeaveTime: ${booking.expectedLeaveTime} for booking ${booking.id} with stayDuration ${tenant.stayDuration} mins`);
+             } else {
+                console.error('Invalid booking date/time for calculation', { date: booking.date, time: booking.time });
+             }
+          }
+        } catch (error) {
+          console.error('Error calculating expected leave time:', error);
+        }
+      } else if (bookingData.status === BookingStatus.COMPLETED) {
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = now.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        const hoursStr = String(hours).padStart(2, '0');
+        const minutesStr = String(minutes).padStart(2, '0');
+        booking.leaveTime = `${hoursStr}:${minutesStr} ${ampm}`;
+      }
+    }
 
     if (customerId) {
       const customer = await this.customerRepository.findOne({ where: { id: customerId } });

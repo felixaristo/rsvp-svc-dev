@@ -1,15 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 import { Promotion } from './entities/promotion.entity';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
+import { SocialMediaService } from '../social-media/social-media.service';
 
 @Injectable()
 export class PromotionService {
+  private readonly logger = new Logger(PromotionService.name);
+
   constructor(
     @InjectRepository(Promotion)
     private readonly repo: Repository<Promotion>,
+    private readonly socialMediaService: SocialMediaService,
+    private readonly configService: ConfigService,
   ) {}
 
   async create(dto: CreatePromotionDto, photoPath: string): Promise<Promotion> {
@@ -20,7 +26,22 @@ export class PromotionService {
       fromDate: new Date(dto.from_date),
       toDate: new Date(dto.to_date),
     });
-    return this.repo.save(entity);
+    const saved = await this.repo.save(entity);
+
+    // Attempt to post to Instagram
+    // const appBaseUrl = this.configService.get<string>('APP_BASE_URL', '');
+    // if (appBaseUrl && photoPath) {
+    //   // Ensure appBaseUrl doesn't have a trailing slash if we're adding one, or handle it cleanly
+    //   const baseUrl = appBaseUrl.endsWith('/') ? appBaseUrl.slice(0, -1) : appBaseUrl;
+    //   const publicImageUrl = `${baseUrl}/${photoPath}`;
+      
+    //   const caption = `${dto.title}\n\n${dto.description}\n\nValid until: ${new Date(dto.to_date).toLocaleDateString()}`;
+      
+    //   this.socialMediaService.postToInstagram(publicImageUrl, caption)
+    //     .catch(err => this.logger.error('Background Instagram post failed', err));
+    // }
+
+    return saved;
   }
 
   async findActive(): Promise<Promotion[]> {
