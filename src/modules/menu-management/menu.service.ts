@@ -49,7 +49,7 @@ export class MenuService {
     const take = limit;
     const skip = (page - 1) * take;
     const [items, total] = await this.repo.findAndCount({
-      where: { category: { id: categoryId } },
+      where: { category: { id: categoryId }, status: true },
       relations: ['category'],
       take,
       skip,
