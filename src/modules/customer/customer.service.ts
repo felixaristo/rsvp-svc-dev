@@ -46,13 +46,15 @@ export class CustomerService {
       where,
     });
 
-    const enrichedItems = items.map(customer => ({
+    const enrichedItems = items.map(async customer => ({
       ...customer,
-      visit_time: 5,
+      visit_time: await this.bookingRepository.count({
+        where: { customer: { id: customer.id } },
+      })
     }));
 
     return {
-      items: enrichedItems,
+      items: await Promise.all(enrichedItems),
       total,
       page,
       limit

@@ -159,102 +159,88 @@ export class BookingService {
   }
 
   async update(id: number, updateBookingDto: UpdateBookingDto, photoPath?: string): Promise<Booking> {
-    const booking = await this.findOne(id);
     const { customerId, tableId, menus, ...bookingData } = updateBookingDto;
 
-    // Handle status changes for leave times
-    if (bookingData.status && bookingData.status !== booking.status) {
-      if (bookingData.status === BookingStatus.CONFIRM) {
-        try {
-          const tenant = await this.tenantService.forMicrosite(1);
-          if (tenant.stayDuration) {
-            let bookingDateStr: string;
-            
-            // Handle booking.date being Date object or string
-            if ((booking.date as any) instanceof Date) {
-              const d = booking.date as any as Date;
-              const year = d.getFullYear();
-              const month = String(d.getMonth() + 1).padStart(2, '0');
-              const day = String(d.getDate()).padStart(2, '0');
-              bookingDateStr = `${year}-${month}-${day}`;
-            } else {
-              bookingDateStr = String(booking.date);
+    const updatePayload: Partial<Booking> & { id: number } = {
+      id,
+      ...bookingData,
+    };
+
+    if (bookingData.status === BookingStatus.CONFIRM && bookingData.date && bookingData.time) {
+      try {
+        const tenant = await this.tenantService.forMicrosite(1);
+        if (tenant.stayDuration) {
+          const bookingDateStr = bookingData.date;
+
+          const timeStr = bookingData.time.trim();
+          let hours: number;
+          let minutes: number;
+
+          if (timeStr.toLowerCase().includes('m')) {
+            const [timePart, modifier] = timeStr.split(' ');
+            const [hStr, mStr] = timePart.split(':');
+            hours = parseInt(hStr, 10);
+            minutes = parseInt(mStr, 10);
+
+            if (modifier && modifier.toLowerCase() === 'pm' && hours < 12) {
+              hours += 12;
             }
-
-            // Normalize time string
-            const timeStr = booking.time.trim();
-            let hours: number;
-            let minutes: number;
-
-            if (timeStr.toLowerCase().includes('m')) { // AM/PM format
-               const [timePart, modifier] = timeStr.split(' ');
-               const [hStr, mStr] = timePart.split(':');
-               hours = parseInt(hStr, 10);
-               minutes = parseInt(mStr, 10);
-               
-               if (modifier && modifier.toLowerCase() === 'pm' && hours < 12) {
-                 hours += 12;
-               }
-               if (modifier && modifier.toLowerCase() === 'am' && hours === 12) {
-                 hours = 0;
-               }
-            } else { // 24h format
-               const [hStr, mStr] = timeStr.split(':');
-               hours = parseInt(hStr, 10);
-               minutes = parseInt(mStr, 10);
+            if (modifier && modifier.toLowerCase() === 'am' && hours === 12) {
+              hours = 0;
             }
-
-            const [yearStr, monthStr, dayStr] = bookingDateStr.split('-');
-             const bookingDateTime = new Date(
-               parseInt(yearStr, 10),
-               parseInt(monthStr, 10) - 1,
-               parseInt(dayStr, 10),
-               hours,
-               minutes,
-               0
-             );
-
-             if (!isNaN(bookingDateTime.getTime())) {
-               const expectedLeaveDate = new Date(bookingDateTime.getTime() + tenant.stayDuration * 60000);
-               let hours = expectedLeaveDate.getHours();
-               const minutes = expectedLeaveDate.getMinutes();
-               const ampm = hours >= 12 ? 'PM' : 'AM';
-               hours = hours % 12;
-               hours = hours ? hours : 12; // the hour '0' should be '12'
-               const hoursStr = String(hours).padStart(2, '0');
-               const minutesStr = String(minutes).padStart(2, '0');
-               booking.expectedLeaveTime = `${hoursStr}:${minutesStr} ${ampm}`;
-               console.log(`Calculated expectedLeaveTime: ${booking.expectedLeaveTime} for booking ${booking.id} with stayDuration ${tenant.stayDuration} mins`);
-             } else {
-                console.error('Invalid booking date/time for calculation', { date: booking.date, time: booking.time });
-             }
+          } else {
+            const [hStr, mStr] = timeStr.split(':');
+            hours = parseInt(hStr, 10);
+            minutes = parseInt(mStr, 10);
           }
-        } catch (error) {
-          console.error('Error calculating expected leave time:', error);
+
+          const [yearStr, monthStr, dayStr] = bookingDateStr.split('-');
+          const bookingDateTime = new Date(
+            parseInt(yearStr, 10),
+            parseInt(monthStr, 10) - 1,
+            parseInt(dayStr, 10),
+            hours,
+            minutes,
+            0,
+          );
+
+          if (!isNaN(bookingDateTime.getTime())) {
+            const expectedLeaveDate = new Date(bookingDateTime.getTime() + tenant.stayDuration * 60000);
+            let leaveHours = expectedLeaveDate.getHours();
+            const leaveMinutes = expectedLeaveDate.getMinutes();
+            const ampm = leaveHours >= 12 ? 'PM' : 'AM';
+            leaveHours = leaveHours % 12;
+            leaveHours = leaveHours ? leaveHours : 12;
+            const hoursStr = String(leaveHours).padStart(2, '0');
+            const minutesStr = String(leaveMinutes).padStart(2, '0');
+            updatePayload.expectedLeaveTime = `${hoursStr}:${minutesStr} ${ampm}`;
+          }
         }
-      } else if (bookingData.status === BookingStatus.COMPLETED) {
-        const now = new Date();
-        let hours = now.getHours();
-        const minutes = now.getMinutes();
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12;
-        hours = hours ? hours : 12; // the hour '0' should be '12'
-        const hoursStr = String(hours).padStart(2, '0');
-        const minutesStr = String(minutes).padStart(2, '0');
-        booking.leaveTime = `${hoursStr}:${minutesStr} ${ampm}`;
+      } catch (error) {
+        console.error('Error calculating expected leave time:', error);
       }
+    } else if (bookingData.status === BookingStatus.COMPLETED) {
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = now.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      const hoursStr = String(hours).padStart(2, '0');
+      const minutesStr = String(minutes).padStart(2, '0');
+      updatePayload.leaveTime = `${hoursStr}:${minutesStr} ${ampm}`;
     }
 
     if (customerId) {
       const customer = await this.customerRepository.findOne({ where: { id: customerId } });
       if (!customer) throw new NotFoundException(`Customer with ID ${customerId} not found`);
-      booking.customer = customer;
+      updatePayload.customer = customer;
     }
 
     if (tableId) {
       const table = await this.tableRepository.findOne({ where: { id: tableId } });
       if (!table) throw new NotFoundException(`Table with ID ${tableId} not found`);
-      booking.table = table;
+      updatePayload.table = table;
     }
 
     if (menus) {
@@ -290,15 +276,14 @@ export class BookingService {
       });
 
       await this.bookingRepository.manager.save(BookingMenu, bookingMenus);
-      booking.bookingMenus = bookingMenus;
     }
 
-    Object.assign(booking, bookingData);
     if (photoPath) {
-      booking.downpaymentProof = photoPath;
+      updatePayload.downpaymentProof = photoPath;
     }
 
-    return await this.bookingRepository.save(booking);
+    await this.bookingRepository.save(updatePayload);
+    return this.findOne(id);
   }
 
   async remove(id: number): Promise<void> {
