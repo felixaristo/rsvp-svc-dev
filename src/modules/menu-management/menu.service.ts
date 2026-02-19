@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, ILike } from 'typeorm';
 import { Menu } from './entities/menu.entity';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
@@ -26,11 +26,27 @@ export class MenuService {
     return this.repo.save(menu);
   }
 
-  async findAll(page: number, limit: number): Promise<{ items: Menu[]; total: number; page: number; limit: number }> {
+  async findAll(
+    page: number,
+    limit: number,
+    categoryId?: number,
+    search?: string,
+  ): Promise<{ items: Menu[]; total: number; page: number; limit: number }> {
     const take = limit;
     const skip = (page - 1) * take;
+    const where: any = {};
+
+    if (categoryId) {
+      where.category = { id: categoryId };
+    }
+
+    if (search) {
+      where.name = ILike(`%${search}%`);
+    }
+
     const [items, total] = await this.repo.findAndCount({
       relations: ['category'],
+      where,
       take,
       skip,
       order: { id: 'DESC' },
