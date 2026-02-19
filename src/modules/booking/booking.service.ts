@@ -166,13 +166,13 @@ export class BookingService {
       ...bookingData,
     };
 
-    if (bookingData.status === BookingStatus.CONFIRM && bookingData.date && bookingData.time) {
+    if (bookingData.status === BookingStatus.CONFIRM || bookingData.status === BookingStatus.SEATED) {
       try {
         const tenant = await this.tenantService.forMicrosite(1);
         if (tenant.stayDuration) {
           const bookingDateStr = bookingData.date;
 
-          const timeStr = bookingData.time.trim();
+          const timeStr = bookingData.time?.trim() ?? '';
           let hours: number;
           let minutes: number;
 
@@ -194,7 +194,7 @@ export class BookingService {
             minutes = parseInt(mStr, 10);
           }
 
-          const [yearStr, monthStr, dayStr] = bookingDateStr.split('-');
+          const [yearStr, monthStr, dayStr] = bookingDateStr?.split('-') || [];
           const bookingDateTime = new Date(
             parseInt(yearStr, 10),
             parseInt(monthStr, 10) - 1,
