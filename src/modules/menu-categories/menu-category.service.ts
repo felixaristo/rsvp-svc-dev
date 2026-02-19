@@ -29,7 +29,7 @@ export class MenuCategoryService {
   }
 
   async getAll(): Promise<MenuCategory[]> {
-    return this.repo.find({ order: { name: 'ASC' } });
+    return this.repo.find({ order: { id: 'DESC' } });
   }
 
   async findOne(id: number): Promise<MenuCategory> {
