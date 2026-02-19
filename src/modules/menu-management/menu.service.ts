@@ -86,6 +86,12 @@ export class MenuService {
     return this.repo.save(menu);
   }
 
+  async updateStatus(id: number, status: boolean): Promise<Menu> {
+    const menu = await this.findOne(id);
+    menu.status = status;
+    return this.repo.save(menu);
+  }
+
   async remove(id: number): Promise<void> {
     const menu = await this.findOne(id);
     await this.repo.softRemove(menu);

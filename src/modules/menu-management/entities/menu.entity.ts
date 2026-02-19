@@ -19,6 +19,9 @@ export class Menu {
   @Column('decimal', { precision: 10, scale: 2 })
   price: number;
 
+  @Column({ type: 'boolean', default: true })
+  status: boolean;
+
   @ManyToOne(() => MenuCategory, (category) => category.menus)
   @JoinColumn({ name: 'category_id' })
   category: MenuCategory;

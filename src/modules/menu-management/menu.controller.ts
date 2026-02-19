@@ -9,6 +9,7 @@ import { MenuService } from './menu.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
 import { KeepNulls } from '../../common/decorators/keep-nulls.decorator';
+import { UpdateMenuStatusDto } from './dto/update-menu-status.dto';
 
 function ensureDir(dir: string) {
   if (!fs.existsSync(dir)) {
@@ -107,5 +108,14 @@ export class MenuController {
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.service.remove(id);
+  }
+
+  @Patch(':id/status')
+  @ApiBody({ type: UpdateMenuStatusDto })
+  updateStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: UpdateMenuStatusDto,
+  ) {
+    return this.service.updateStatus(id, body.status);
   }
 }
