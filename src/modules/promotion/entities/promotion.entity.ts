@@ -1,5 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { FileUrlTransformer } from '../../../common/transformers/file-url.transformer';
+import { Branch } from '../../branch/entities/branch.entity';
 
 @Entity()
 export class Promotion {
@@ -20,6 +21,10 @@ export class Promotion {
 
   @Column({ type: 'timestamp', name: 'to_date' })
   toDate: Date;
+
+  @ManyToOne(() => Branch, { nullable: false })
+  @JoinColumn({ name: 'branch_id' })
+  branch: Branch;
 
   @CreateDateColumn({ name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

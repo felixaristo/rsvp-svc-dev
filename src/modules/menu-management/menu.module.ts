@@ -4,10 +4,11 @@ import { MenuService } from './menu.service';
 import { MenuController } from './menu.controller';
 import { Menu } from './entities/menu.entity';
 import { MenuCategoryModule } from '../menu-categories/menu-category.module';
+import { Branch } from '../branch/entities/branch.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Menu]),
+    TypeOrmModule.forFeature([Menu, Branch]),
     MenuCategoryModule,
   ],
   controllers: [MenuController],

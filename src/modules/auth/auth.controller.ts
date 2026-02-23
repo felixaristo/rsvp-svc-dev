@@ -2,7 +2,7 @@ import { Controller, Request, Post, UseGuards, Get, Body, UnauthorizedException 
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { ApiTags, ApiBearerAuth, ApiBasicAuth, ApiBody } from '@nestjs/swagger';
-import { LoginDto } from './dto/login.dto';
+import { LoginDto, RefreshTokenDto } from './dto/login.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -19,6 +19,12 @@ export class AuthController {
       throw new UnauthorizedException();
     }
     return this.authService.login(user);
+  }
+
+  @Post('refresh')
+  @ApiBody({ type: RefreshTokenDto })
+  async refresh(@Body() body: RefreshTokenDto) {
+    return this.authService.refresh(body.refresh_token);
   }
 
   @Post('register')

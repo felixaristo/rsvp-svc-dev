@@ -24,4 +24,10 @@ export class CreateMenuDto {
   @Type(() => Number)
   @IsNumber()
   categoryId: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  branchId: number;
 }

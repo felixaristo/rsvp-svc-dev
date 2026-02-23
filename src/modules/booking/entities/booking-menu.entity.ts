@@ -12,7 +12,7 @@ export class BookingMenu {
 
   @Column({ name: 'menu_id' })
   menuId: number;
-
+  
   @Column({ default: 1 })
   qty: number;
 

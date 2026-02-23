@@ -4,9 +4,10 @@ import { Table } from './entities/table.entity';
 import { Category } from '../table-categories/entities/category.entity';
 import { TableService } from './table.service';
 import { TableController } from './table.controller';
+import { Branch } from '../branch/entities/branch.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Table, Category])],
+  imports: [TypeOrmModule.forFeature([Table, Category, Branch])],
   providers: [TableService],
   controllers: [TableController],
   exports: [TableService],

@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, DeleteDateColumn } from 'typeorm';
 import { Category } from '../../table-categories/entities/category.entity';
+import { Branch } from '../../branch/entities/branch.entity';
 
 @Entity('table')
 export class Table {
@@ -13,8 +14,12 @@ export class Table {
   covers: number;
 
   @ManyToOne(() => Category, { nullable: false })
-  @JoinColumn({ name: 'categoryId' })
+  @JoinColumn({ name: 'category_id' })
   category: Category;
+
+  @ManyToOne(() => Branch, { nullable: false })
+  @JoinColumn({ name: 'branch_id' })
+  branch: Branch;
 
   @CreateDateColumn({ name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

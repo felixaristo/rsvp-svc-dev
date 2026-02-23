@@ -5,25 +5,36 @@ import { Menu } from './entities/menu.entity';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
 import { MenuCategoryService } from '../menu-categories/menu-category.service';
+import { Branch } from '../branch/entities/branch.entity';
 
 @Injectable()
 export class MenuService {
   constructor(
     @InjectRepository(Menu)
     private repo: Repository<Menu>,
+    @InjectRepository(Branch)
+    private branchRepo: Repository<Branch>,
     private categoryService: MenuCategoryService,
   ) {}
 
   async create(createDto: CreateMenuDto, photoFilename?: string): Promise<Menu> {
     const category = await this.categoryService.findOne(createDto.categoryId);
-    
+    const effectiveBranchId = createDto.branchId ?? 1;
+    const branch = await this.branchRepo.findOne({ where: { id: effectiveBranchId } });
+    if (!branch) {
+      throw new NotFoundException(`Branch with ID ${effectiveBranchId} not found`);
+    }
+
+    const { branchId, ...rest } = createDto as any;
+
     const menu = this.repo.create({
-      ...createDto,
+      ...rest,
       photo: photoFilename,
       category,
+      branch,
     });
     
-    return this.repo.save(menu);
+    return this.repo.save(menu as any);
   }
 
   async findAll(
@@ -45,7 +56,7 @@ export class MenuService {
     }
 
     const [items, total] = await this.repo.findAndCount({
-      relations: ['category'],
+      relations: ['category', 'branch'],
       where,
       take,
       skip,
@@ -56,7 +67,7 @@ export class MenuService {
 
   async findAllActive(): Promise<Menu[]> {
     return this.repo.find({
-      relations: ['category'],
+      relations: ['category', 'branch'],
       order: { category: { name: 'ASC' }, name: 'ASC' },
     });
   }
@@ -66,7 +77,7 @@ export class MenuService {
     const skip = (page - 1) * take;
     const [items, total] = await this.repo.findAndCount({
       where: { category: { id: categoryId }, status: true },
-      relations: ['category'],
+      relations: ['category', 'branch'],
       take,
       skip,
       order: { name: 'ASC' },
@@ -77,7 +88,7 @@ export class MenuService {
   async findOne(id: number): Promise<Menu> {
     const menu = await this.repo.findOne({ 
       where: { id },
-      relations: ['category']
+      relations: ['category', 'branch']
     });
     
     if (!menu) {

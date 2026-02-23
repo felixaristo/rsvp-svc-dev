@@ -4,9 +4,10 @@ import { CustomerService } from './customer.service';
 import { CustomerController } from './customer.controller';
 import { Customer } from './entities/customer.entity';
 import { Booking } from '../booking/entities/booking.entity';
+import { Branch } from '../branch/entities/branch.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Customer, Booking])],
+  imports: [TypeOrmModule.forFeature([Customer, Booking, Branch])],
   controllers: [CustomerController],
   providers: [CustomerService],
   exports: [CustomerService],

@@ -45,11 +45,27 @@ export class CreateBookingDto {
   @IsString()
   note?: string;
 
+  @ApiPropertyOptional({ example: 'walk-in' })
+  @IsOptional()
+  @IsString()
+  channel?: string;
+
+  @ApiPropertyOptional({ example: '08:30 PM' })
+  @IsOptional()
+  @IsString()
+  expectedLeaveTime?: string;
+
   @ApiPropertyOptional({ example: 1 })
   @IsOptional()
   @Transform(({ value }) => value ? parseInt(value) : undefined)
   @IsNumber()
   tableId?: number;
+
+  @ApiPropertyOptional({ example: 1 })
+  @IsOptional()
+  @Transform(({ value }) => value ? parseInt(value) : undefined)
+  @IsNumber()
+  branchId?: number;
 
   @ApiPropertyOptional({ example: '[{"menuId":1,"qty":2}]' })
   @IsOptional()

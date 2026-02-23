@@ -3,6 +3,7 @@ import { Customer } from '../../customer/entities/customer.entity';
 import { Table } from '../../table-management/entities/table.entity';
 import { BookingMenu } from './booking-menu.entity';
 import { FileUrlTransformer } from '../../../common/transformers/file-url.transformer';
+import { Branch } from '../../branch/entities/branch.entity';
 
 export enum BookingStatus {
   WAITING_LIST = 'waiting_list',
@@ -45,12 +46,19 @@ export class Booking {
   @Column({ name: 'expected_leave_time', type: 'varchar', nullable: true })
   expectedLeaveTime: string;
 
+   @Column({ type: 'varchar', length: 50, nullable: true })
+   channel: string;
+
   @Column({ name: 'leave_time', type: 'varchar', nullable: true })
   leaveTime: string;
 
   @ManyToOne(() => Table, { nullable: true })
   @JoinColumn({ name: 'table_id' })
   table: Table;
+
+  @ManyToOne(() => Branch, { nullable: false })
+  @JoinColumn({ name: 'branch_id' })
+  branch: Branch;
 
   @OneToMany(() => BookingMenu, (bookingMenu) => bookingMenu.booking, { cascade: true })
   bookingMenus: BookingMenu[];

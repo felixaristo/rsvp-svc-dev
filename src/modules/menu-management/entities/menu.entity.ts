@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { MenuCategory } from '../../menu-categories/entities/menu-category.entity';
 import { FileUrlTransformer } from '../../../common/transformers/file-url.transformer';
+import { Branch } from '../../branch/entities/branch.entity';
 
 @Entity('menu')
 export class Menu {
@@ -21,6 +22,10 @@ export class Menu {
 
   @Column({ type: 'boolean', default: true })
   status: boolean;
+
+  @ManyToOne(() => Branch, { nullable: false })
+  @JoinColumn({ name: 'branch_id' })
+  branch: Branch;
 
   @ManyToOne(() => MenuCategory, (category) => category.menus)
   @JoinColumn({ name: 'category_id' })

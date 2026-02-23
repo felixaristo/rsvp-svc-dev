@@ -21,19 +21,37 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = { username: user.username, sub: user.id };
+    const accessPayload = { username: user.username, sub: user.id };
+    const refreshPayload = { sub: user.id };
+    const accessToken = this.jwtService.sign(accessPayload);
+    const refreshToken = this.jwtService.sign(refreshPayload, { expiresIn: '7d' });
     return {
       profile: {
         id: user.id,
         username: user.username,
         fullname: user.fullname,
+        branchId: user.branch.id,
         role: user.role,
       },
       token:{
-        access_token: this.jwtService.sign(payload),
-        refresh_token: 123
+        access_token: accessToken,
+        refresh_token: refreshToken
       }
     };
+  }
+
+  async refresh(refreshToken: string) {
+    try {
+      const payload = this.jwtService.verify(refreshToken);
+      const user = await this.usersService.findById(payload.sub);
+      if (!user || user.deletedAt) {
+        throw new UnauthorizedException();
+      }
+      const { password, ...safeUser } = user as any;
+      return this.login(safeUser);
+    } catch (error) {
+      throw new UnauthorizedException();
+    }
   }
 
   async register(userDto: any) {

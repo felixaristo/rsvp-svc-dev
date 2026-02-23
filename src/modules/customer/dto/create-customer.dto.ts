@@ -1,5 +1,6 @@
-import { IsNotEmpty, IsOptional, IsEmail, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsEmail, IsString, IsNumber } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class CreateCustomerDto {
   @ApiProperty({ example: 'John Doe' })
@@ -21,4 +22,10 @@ export class CreateCustomerDto {
   @IsOptional()
   @IsString()
   instagram?: string;
+
+  @ApiPropertyOptional({ example: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  branchId?: number;
 }

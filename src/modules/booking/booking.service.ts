@@ -10,6 +10,7 @@ import { Table } from '../table-management/entities/table.entity';
 import { Menu } from '../menu-management/entities/menu.entity';
 import { BookingMenu } from './entities/booking-menu.entity';
 import { TenantService } from '../tenant/tenant.service';
+import { Branch } from '../branch/entities/branch.entity';
 
 @Injectable()
 export class BookingService {
@@ -22,6 +23,8 @@ export class BookingService {
     private readonly tableRepository: Repository<Table>,
     @InjectRepository(Menu)
     private readonly menuRepository: Repository<Menu>,
+    @InjectRepository(Branch)
+    private readonly branchRepository: Repository<Branch>,
     private readonly tenantService: TenantService,
   ) {}
 
@@ -37,7 +40,7 @@ export class BookingService {
   async create(createBookingDto: CreateBookingDto, photoPath?: string): Promise<Booking> {
     try {
       console.log('Creating booking with DTO:', JSON.stringify(createBookingDto));
-      const { customerId, tableId, menus, ...bookingData } = createBookingDto;
+      const { customerId, tableId, menus, branchId, ...bookingData } = createBookingDto;
       console.log('data menus', menus);
       
 
@@ -55,10 +58,18 @@ export class BookingService {
         table = foundTable;
       }
 
+      const effectiveBranchId = branchId ?? 1;
+      const branch = await this.branchRepository.findOne({ where: { id: effectiveBranchId } });
+      if (!branch) {
+        throw new NotFoundException(`Branch with ID ${effectiveBranchId} not found`);
+      }
+
       const booking = this.bookingRepository.create({
         ...bookingData,
+        channel: bookingData.channel ?? '',
         customer,
         table,
+        branch,
         bookingCode: this.generateBookingCode(),
         downpaymentProof: photoPath,
       });
@@ -133,7 +144,7 @@ export class BookingService {
       skip: (page - 1) * limit,
       take: limit,
       where,
-      relations: ['customer', 'table', 'bookingMenus', 'bookingMenus.menu'],
+      relations: ['customer', 'table', 'branch', 'bookingMenus', 'bookingMenus.menu'],
       order: {
         id: 'DESC',
       },
@@ -150,7 +161,7 @@ export class BookingService {
   async findOne(id: number): Promise<Booking> {
     const booking = await this.bookingRepository.findOne({
       where: { id },
-      relations: ['customer', 'table', 'bookingMenus', 'bookingMenus.menu'],
+      relations: ['customer', 'table', 'branch', 'bookingMenus', 'bookingMenus.menu'],
     });
     if (!booking) {
       throw new NotFoundException(`Booking with ID ${id} not found`);
@@ -159,7 +170,7 @@ export class BookingService {
   }
 
   async update(id: number, updateBookingDto: UpdateBookingDto, photoPath?: string): Promise<Booking> {
-    const { customerId, tableId, menus, ...bookingData } = updateBookingDto;
+    const { customerId, tableId, menus, branchId, ...bookingData } = updateBookingDto;
 
     const updatePayload: Partial<Booking> & { id: number } = {
       id,
@@ -231,6 +242,10 @@ export class BookingService {
       updatePayload.leaveTime = `${hoursStr}:${minutesStr} ${ampm}`;
     }
 
+    if (bookingData.expectedLeaveTime !== undefined) {
+      updatePayload.expectedLeaveTime = bookingData.expectedLeaveTime;
+    }
+
     if (customerId) {
       const customer = await this.customerRepository.findOne({ where: { id: customerId } });
       if (!customer) throw new NotFoundException(`Customer with ID ${customerId} not found`);
@@ -241,6 +256,15 @@ export class BookingService {
       const table = await this.tableRepository.findOne({ where: { id: tableId } });
       if (!table) throw new NotFoundException(`Table with ID ${tableId} not found`);
       updatePayload.table = table;
+    }
+
+    if (branchId !== undefined) {
+      const effectiveBranchId = branchId ?? 1;
+      const branch = await this.branchRepository.findOne({ where: { id: effectiveBranchId } });
+      if (!branch) {
+        throw new NotFoundException(`Branch with ID ${effectiveBranchId} not found`);
+      }
+      (updatePayload as any).branch = branch;
     }
 
     if (menus) {

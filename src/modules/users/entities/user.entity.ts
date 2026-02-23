@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Branch } from '../../branch/entities/branch.entity';
 
 @Entity()
 export class User {
@@ -16,6 +17,10 @@ export class User {
 
     @Column()
     role: number;
+
+    @ManyToOne(() => Branch, { nullable: false })
+    @JoinColumn({ name: 'branch_id' })
+    branch: Branch;
 
     @CreateDateColumn({ name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })
     createdAt: Date;

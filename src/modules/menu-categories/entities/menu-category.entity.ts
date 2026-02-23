@@ -1,5 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { Menu } from '../../menu-management/entities/menu.entity';
+import { Branch } from '../../branch/entities/branch.entity';
 
 @Entity('menu_categories')
 export class MenuCategory {
@@ -8,6 +9,10 @@ export class MenuCategory {
 
   @Column()
   name: string;
+
+  @ManyToOne(() => Branch, { nullable: false })
+  @JoinColumn({ name: 'branch_id' })
+  branch: Branch;
 
   @OneToMany(() => Menu, (menu) => menu.category)
   menus: Menu[];

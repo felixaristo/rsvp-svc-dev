@@ -7,11 +7,12 @@ import { CustomerModule } from '../customer/customer.module';
 import { Customer } from '../customer/entities/customer.entity';
 import { Table } from '../table-management/entities/table.entity';
 import { Menu } from '../menu-management/entities/menu.entity';
+import { Branch } from '../branch/entities/branch.entity';
 import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Booking, Customer, Table, Menu]),
+    TypeOrmModule.forFeature([Booking, Customer, Table, Menu, Branch]),
     CustomerModule,
     TenantModule,
   ],

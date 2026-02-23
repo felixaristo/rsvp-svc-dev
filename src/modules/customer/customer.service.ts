@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike, Between, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
 import { Customer } from './entities/customer.entity';
 import { Booking } from '../booking/entities/booking.entity';
+import { Branch } from '../branch/entities/branch.entity';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { GetCustomersFilterDto } from './dto/get-customers-filter.dto';
@@ -14,11 +15,24 @@ export class CustomerService {
     private readonly customerRepository: Repository<Customer>,
     @InjectRepository(Booking)
     private readonly bookingRepository: Repository<Booking>,
+    @InjectRepository(Branch)
+    private readonly branchRepository: Repository<Branch>,
   ) {}
 
   async create(createCustomerDto: CreateCustomerDto): Promise<Customer> {
-    const customer = this.customerRepository.create(createCustomerDto);
-    return await this.customerRepository.save(customer);
+    const effectiveBranchId = createCustomerDto.branchId ?? 1;
+    const branch = await this.branchRepository.findOne({ where: { id: effectiveBranchId } });
+    if (!branch) {
+      throw new NotFoundException(`Branch with ID ${effectiveBranchId} not found`);
+    }
+
+    const { branchId, ...rest } = createCustomerDto as any;
+
+    const customer = this.customerRepository.create({
+      ...rest,
+      branch,
+    });
+    return await this.customerRepository.save(customer as any);
   }
 
   async findAll(page: number, limit: number, filterDto?: GetCustomersFilterDto): Promise<{ items: Customer[]; total: number; page: number; limit: number }> {
@@ -44,6 +58,7 @@ export class CustomerService {
         id: 'DESC',
       },
       where,
+      relations: ['branch'],
     });
 
     const enrichedItems = items.map(async customer => ({
@@ -62,7 +77,10 @@ export class CustomerService {
   }
 
   async findOne(id: number): Promise<Customer> {
-    const customer = await this.customerRepository.findOne({ where: { id } });
+    const customer = await this.customerRepository.findOne({
+      where: { id },
+      relations: ['branch'],
+    });
     if (!customer) {
       throw new NotFoundException(`Customer with ID ${id} not found`);
     }
@@ -106,7 +124,18 @@ export class CustomerService {
 
   async update(id: number, updateCustomerDto: UpdateCustomerDto): Promise<Customer> {
     const customer = await this.findOne(id);
-    const updatedCustomer = Object.assign(customer, updateCustomerDto);
+
+    if (updateCustomerDto.branchId !== undefined) {
+      const effectiveBranchId = updateCustomerDto.branchId ?? 1;
+      const branch = await this.branchRepository.findOne({ where: { id: effectiveBranchId } });
+      if (!branch) {
+        throw new NotFoundException(`Branch with ID ${effectiveBranchId} not found`);
+      }
+      (customer as any).branch = branch;
+    }
+
+    const { branchId, ...rest } = updateCustomerDto as any;
+    const updatedCustomer = Object.assign(customer, rest);
     return await this.customerRepository.save(updatedCustomer);
   }
 

@@ -24,8 +24,10 @@ import { Booking } from './modules/booking/entities/booking.entity';
 import { BookingMenu } from './modules/booking/entities/booking-menu.entity';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { Tenant } from './modules/tenant/entities/tenant.entity';
+import { Branch } from './modules/branch/entities/branch.entity';
 import { MicrositeModule } from './modules/microsite/microsite.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { BranchModule } from './modules/branch/branch.module';
 
 @Module({
   imports: [
@@ -37,7 +39,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
       username: process.env.DB_USERNAME ?? 'postgres',
       password: process.env.DB_PASSWORD ?? 'postgres',
       database: process.env.DB_NAME || 'rsvp_db',
-      entities: [User, Category, Table, Promotion, MenuCategory, Menu, Customer, Booking, BookingMenu, Tenant],
+      entities: [User, Category, Table, Promotion, MenuCategory, Menu, Customer, Booking, BookingMenu, Tenant, Branch],
       synchronize: true,
     }),
     UsersModule,
@@ -53,6 +55,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     TenantModule,
     MicrositeModule,
     DashboardModule,
+    BranchModule,
   ],
   controllers: [AppController],
   providers: [AppService],
