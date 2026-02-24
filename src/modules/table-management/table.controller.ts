@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, ParseIntPipe, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBody, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Param, Patch, Delete, ParseIntPipe, UseGuards, Query } from '@nestjs/common';
+import { ApiTags, ApiBody, ApiParam, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { TableService } from './table.service';
 import { CreateTableDto } from './dto/create-table.dto';
@@ -21,8 +21,13 @@ export class TableController {
   @Get(':page/:limit')
   @ApiParam({ name: 'page', required: true })
   @ApiParam({ name: 'limit', required: true })
-  findAll(@Param('page', ParseIntPipe) page: number, @Param('limit', ParseIntPipe) limit: number) {
-    return this.service.findAll(page, limit);
+  @ApiQuery({ name: 'number', required: false, description: 'Search by table number (exact match)' })
+  findAll(
+    @Param('page', ParseIntPipe) page: number,
+    @Param('limit', ParseIntPipe) limit: number,
+    @Query('number') number?: string,
+  ) {
+    return this.service.findAll(page, limit, number);
   }
 
   @Get(':id')

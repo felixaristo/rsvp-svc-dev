@@ -37,14 +37,20 @@ export class TableService {
     return this.repo.save(entity as any);
   }
 
-  async findAll(page = 1, limit = 10): Promise<{ items: Table[]; total: number; page: number; limit: number }> {
+  async findAll(page = 1, limit = 10, number?: string): Promise<{ items: Table[]; total: number; page: number; limit: number }> {
     const take = Math.max(1, Number(limit));
     const p = Math.max(1, Number(page));
     const skip = (p - 1) * take;
+    const where: any = {};
+    if (number) {
+      where.number = number;
+    }
+
     const [items, total] = await this.repo.findAndCount({
       relations: ['category', 'branch'],
       skip,
       take,
+      where,
       order: { id: 'DESC' },
     });
     return { items, total, page: p, limit: take };
