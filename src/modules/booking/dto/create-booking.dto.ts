@@ -72,6 +72,9 @@ export class CreateBookingDto {
             .map((v) => parseInt(v, 10))
             .filter((v) => !isNaN(v));
         }
+        if (typeof parsed === 'number' && !isNaN(parsed)) {
+          return [parsed];
+        }
       } catch (e) {
         if (value.includes(',')) {
           return value
