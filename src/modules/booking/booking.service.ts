@@ -40,7 +40,7 @@ export class BookingService {
   async create(createBookingDto: CreateBookingDto, photoPath?: string): Promise<Booking> {
     try {
       console.log('Creating booking with DTO:', JSON.stringify(createBookingDto));
-      const { customerId, tableId, menus, branchId, ...bookingData } = createBookingDto;
+      const { customerId, tableIds, menus, branchId, ...bookingData } = createBookingDto;
       console.log('data menus', menus);
       
 
@@ -49,13 +49,13 @@ export class BookingService {
         throw new NotFoundException(`Customer with ID ${customerId} not found`);
       }
 
-      let table: Table | undefined;
-      if (tableId) {
-        const foundTable = await this.tableRepository.findOne({ where: { id: tableId } });
-        if (!foundTable) {
-          throw new NotFoundException(`Table with ID ${tableId} not found`);
+      let tables: Table[] | undefined;
+      if (tableIds && tableIds.length > 0) {
+        const uniqueTableIds = Array.from(new Set(tableIds));
+        tables = await this.tableRepository.findBy({ id: In(uniqueTableIds) });
+        if (tables.length !== uniqueTableIds.length) {
+          throw new NotFoundException('Some tables not found');
         }
-        table = foundTable;
       }
 
       const effectiveBranchId = branchId ?? 1;
@@ -68,7 +68,7 @@ export class BookingService {
         ...bookingData,
         channel: bookingData.channel ?? '',
         customer,
-        table,
+        tables,
         branch,
         bookingCode: this.generateBookingCode(),
         downpaymentProof: photoPath,
@@ -144,7 +144,7 @@ export class BookingService {
       skip: (page - 1) * limit,
       take: limit,
       where,
-      relations: ['customer', 'table', 'branch', 'bookingMenus', 'bookingMenus.menu'],
+      relations: ['customer', 'tables', 'branch', 'bookingMenus', 'bookingMenus.menu'],
       order: {
         id: 'DESC',
       },
@@ -161,7 +161,7 @@ export class BookingService {
   async findOne(id: number): Promise<Booking> {
     const booking = await this.bookingRepository.findOne({
       where: { id },
-      relations: ['customer', 'table', 'branch', 'bookingMenus', 'bookingMenus.menu'],
+      relations: ['customer', 'tables', 'branch', 'bookingMenus', 'bookingMenus.menu'],
     });
     if (!booking) {
       throw new NotFoundException(`Booking with ID ${id} not found`);
@@ -170,7 +170,7 @@ export class BookingService {
   }
 
   async update(id: number, updateBookingDto: UpdateBookingDto, photoPath?: string): Promise<Booking> {
-    const { customerId, tableId, menus, branchId, ...bookingData } = updateBookingDto;
+    const { customerId, tableIds, menus, branchId, ...bookingData } = updateBookingDto;
 
     const updatePayload: Partial<Booking> & { id: number } = {
       id,
@@ -217,14 +217,11 @@ export class BookingService {
 
           if (!isNaN(bookingDateTime.getTime())) {
             const expectedLeaveDate = new Date(bookingDateTime.getTime() + tenant.stayDuration * 60000);
-            let leaveHours = expectedLeaveDate.getHours();
+            const leaveHours = expectedLeaveDate.getHours();
             const leaveMinutes = expectedLeaveDate.getMinutes();
-            const ampm = leaveHours >= 12 ? 'PM' : 'AM';
-            leaveHours = leaveHours % 12;
-            leaveHours = leaveHours ? leaveHours : 12;
             const hoursStr = String(leaveHours).padStart(2, '0');
             const minutesStr = String(leaveMinutes).padStart(2, '0');
-            updatePayload.expectedLeaveTime = `${hoursStr}:${minutesStr} ${ampm}`;
+            updatePayload.expectedLeaveTime = `${hoursStr}:${minutesStr}`;
           }
         }
       } catch (error) {
@@ -232,14 +229,11 @@ export class BookingService {
       }
     } else if (bookingData.status === BookingStatus.COMPLETED) {
       const now = new Date();
-      let hours = now.getHours();
+      const hours = now.getHours();
       const minutes = now.getMinutes();
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12;
-      hours = hours ? hours : 12;
       const hoursStr = String(hours).padStart(2, '0');
       const minutesStr = String(minutes).padStart(2, '0');
-      updatePayload.leaveTime = `${hoursStr}:${minutesStr} ${ampm}`;
+      updatePayload.leaveTime = `${hoursStr}:${minutesStr}`;
     }
 
     if (bookingData.expectedLeaveTime !== undefined) {
@@ -252,10 +246,13 @@ export class BookingService {
       updatePayload.customer = customer;
     }
 
-    if (tableId) {
-      const table = await this.tableRepository.findOne({ where: { id: tableId } });
-      if (!table) throw new NotFoundException(`Table with ID ${tableId} not found`);
-      updatePayload.table = table;
+    if (tableIds && tableIds.length > 0) {
+      const uniqueTableIds = Array.from(new Set(tableIds));
+      const tables = await this.tableRepository.findBy({ id: In(uniqueTableIds) });
+      if (tables.length !== uniqueTableIds.length) {
+        throw new NotFoundException('Some tables not found');
+      }
+      (updatePayload as any).tables = tables;
     }
 
     if (branchId !== undefined) {

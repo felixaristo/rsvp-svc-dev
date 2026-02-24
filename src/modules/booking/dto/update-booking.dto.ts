@@ -3,7 +3,7 @@ import { IsOptional, IsString } from 'class-validator';
 import { CreateBookingDto } from './create-booking.dto';
 
 export class UpdateBookingDto extends PartialType(CreateBookingDto) {
-  @ApiPropertyOptional({ example: '08:30 PM' })
+  @ApiPropertyOptional({ example: '21:30' })
   @IsOptional()
   @IsString()
   expectedLeaveTime?: string;

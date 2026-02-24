@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToOne, OneToMany, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
 import { Customer } from '../../customer/entities/customer.entity';
 import { Table } from '../../table-management/entities/table.entity';
 import { BookingMenu } from './booking-menu.entity';
@@ -52,9 +52,13 @@ export class Booking {
   @Column({ name: 'leave_time', type: 'varchar', nullable: true })
   leaveTime: string;
 
-  @ManyToOne(() => Table, { nullable: true })
-  @JoinColumn({ name: 'table_id' })
-  table: Table;
+  @ManyToMany(() => Table)
+  @JoinTable({
+    name: 'booking_table',
+    joinColumn: { name: 'booking_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'table_id', referencedColumnName: 'id' },
+  })
+  tables: Table[];
 
   @ManyToOne(() => Branch, { nullable: false })
   @JoinColumn({ name: 'branch_id' })

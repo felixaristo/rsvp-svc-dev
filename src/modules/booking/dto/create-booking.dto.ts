@@ -29,7 +29,7 @@ export class CreateBookingDto {
   @IsString()
   date: string;
 
-  @ApiProperty({ example: '07:00 PM' })
+  @ApiProperty({ example: '19:00' })
   @IsNotEmpty()
   @IsString()
   time: string;
@@ -50,16 +50,45 @@ export class CreateBookingDto {
   @IsString()
   channel?: string;
 
-  @ApiPropertyOptional({ example: '08:30 PM' })
+  @ApiPropertyOptional({ example: '21:30' })
   @IsOptional()
   @IsString()
   expectedLeaveTime?: string;
 
-  @ApiPropertyOptional({ example: 1 })
+  @ApiPropertyOptional({ type: [Number], example: [1, 2] })
   @IsOptional()
-  @Transform(({ value }) => value ? parseInt(value) : undefined)
-  @IsNumber()
-  tableId?: number;
+  @IsArray()
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value
+        .map((v) => parseInt(v, 10))
+        .filter((v) => !isNaN(v));
+    }
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          return parsed
+            .map((v) => parseInt(v, 10))
+            .filter((v) => !isNaN(v));
+        }
+      } catch (e) {
+        if (value.includes(',')) {
+          return value
+            .split(',')
+            .map((part) => parseInt(part.trim(), 10))
+            .filter((v) => !isNaN(v));
+        }
+        const single = parseInt(value, 10);
+        if (!isNaN(single)) {
+          return [single];
+        }
+      }
+    }
+    return undefined;
+  })
+  @IsNumber({}, { each: true })
+  tableIds?: number[];
 
   @ApiPropertyOptional({ example: 1 })
   @IsOptional()

@@ -107,7 +107,7 @@ export class CustomerService {
       where: { customer: { id: customerId } },
       skip: (page - 1) * limit,
       take: limit,
-      relations: ['table', 'bookingMenus', 'bookingMenus.menu'],
+      relations: ['tables', 'bookingMenus', 'bookingMenus.menu'],
       order: {
         date: 'DESC',
         time: 'DESC',
