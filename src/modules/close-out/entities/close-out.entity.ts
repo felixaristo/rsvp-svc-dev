@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToOne, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
 import { Category } from '../../table-categories/entities/category.entity';
 import { Branch } from '../../branch/entities/branch.entity';
 
@@ -10,9 +10,13 @@ export class CloseOut {
   @Column()
   title: string;
 
-  @ManyToOne(() => Category, { nullable: false })
-  @JoinColumn({ name: 'category_id' })
-  category: Category;
+  @ManyToMany(() => Category)
+  @JoinTable({
+    name: 'close_out_categories',
+    joinColumn: { name: 'close_out_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'category_id', referencedColumnName: 'id' },
+  })
+  categories: Category[];
 
   @Column({ type: 'date', name: 'from_date' })
   fromDate: Date;

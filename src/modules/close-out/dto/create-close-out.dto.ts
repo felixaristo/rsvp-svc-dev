@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsDateString, IsNumber, Matches, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsDateString, IsNumber, Matches, IsOptional, IsArray } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateCloseOutDto {
@@ -7,10 +7,11 @@ export class CreateCloseOutDto {
   @IsString()
   title: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: [Number], example: [1, 2] })
   @IsNotEmpty()
-  @IsNumber()
-  categoryId: number;
+  @IsArray()
+  @IsNumber({}, { each: true })
+  categoryIds: number[];
 
   @ApiProperty({ example: '2023-12-25' })
   @IsNotEmpty()

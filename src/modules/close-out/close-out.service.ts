@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { CloseOut } from './entities/close-out.entity';
 import { CreateCloseOutDto } from './dto/create-close-out.dto';
 import { UpdateCloseOutDto } from './dto/update-close-out.dto';
@@ -19,15 +19,18 @@ export class CloseOutService {
   ) {}
 
   async create(createDto: CreateCloseOutDto) {
-    const category = await this.categoryRepo.findOne({ where: { id: createDto.categoryId } });
-    if (!category) throw new NotFoundException(`Category with ID ${createDto.categoryId} not found`);
+    const categories = await this.categoryRepo.findBy({ id: In(createDto.categoryIds) });
+    if (categories.length !== createDto.categoryIds.length) {
+      throw new NotFoundException('Some categories not found');
+    }
 
-    const branch = await this.branchRepo.findOne({ where: { id: createDto.branchId || 1 } });
-    if (!branch) throw new NotFoundException(`Branch with ID ${createDto.branchId || 1} not found`);
+    const branchId = createDto.branchId || 1;
+    const branch = await this.branchRepo.findOne({ where: { id: branchId } });
+    if (!branch) throw new NotFoundException(`Branch with ID ${branchId} not found`);
 
     const entity = this.repo.create({
       ...createDto,
-      category,
+      categories,
       branch,
     });
 
@@ -40,7 +43,7 @@ export class CloseOutService {
     const skip = (p - 1) * take;
 
     const [items, total] = await this.repo.findAndCount({
-      relations: ['category', 'branch'],
+      relations: ['categories', 'branch'],
       skip,
       take,
       order: { id: 'DESC' },
@@ -52,7 +55,7 @@ export class CloseOutService {
   async findOne(id: number) {
     const item = await this.repo.findOne({
       where: { id },
-      relations: ['category', 'branch'],
+      relations: ['categories', 'branch'],
     });
     if (!item) throw new NotFoundException(`CloseOut with ID ${id} not found`);
     return item;
@@ -61,10 +64,12 @@ export class CloseOutService {
   async update(id: number, updateDto: UpdateCloseOutDto) {
     const item = await this.findOne(id);
 
-    if (updateDto.categoryId) {
-      const category = await this.categoryRepo.findOne({ where: { id: updateDto.categoryId } });
-      if (!category) throw new NotFoundException(`Category with ID ${updateDto.categoryId} not found`);
-      item.category = category;
+    if (updateDto.categoryIds) {
+      const categories = await this.categoryRepo.findBy({ id: In(updateDto.categoryIds) });
+      if (categories.length !== updateDto.categoryIds.length) {
+        throw new NotFoundException('Some categories not found');
+      }
+      item.categories = categories;
     }
 
     if (updateDto.branchId) {

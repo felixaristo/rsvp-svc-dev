@@ -342,10 +342,10 @@ export class BookingService {
     if (Object.keys(closeOutWhere).length > 0) {
       const rawCloseOuts = await this.closeOutRepository.find({
         where: closeOutWhere,
-        relations: ['category'],
+        relations: ['categories'],
       });
 
-      const categoryIds = [...new Set(rawCloseOuts.map(c => c.category.id))];
+      const categoryIds = [...new Set(rawCloseOuts.flatMap(c => c.categories.map(cat => cat.id)))];
       
       let tables: Table[] = [];
       if (categoryIds.length > 0) {
@@ -358,8 +358,9 @@ export class BookingService {
       }
 
       closeOuts = rawCloseOuts.map(c => {
+        const currentCategoryIds = c.categories.map(cat => cat.id);
         const categoryTables = tables
-          .filter(t => t.category.id === c.category.id)
+          .filter(t => currentCategoryIds.includes(t.category.id))
           .map(t => t.id);
 
         return {
