@@ -67,4 +67,8 @@ export class MicrositeService {
   async getMenus(categoryId: number, page: number = 1, limit: number = 10) {
     return this.menuService.findByCategory(categoryId, page, limit);
   }
+
+  async getAvailableTimeSlots(date: string) {
+    return this.bookingService.getAvailableTimeSlots(date);
+  }
 }

@@ -53,4 +53,10 @@ export class MicrositeController {
   ) {
     return this.micrositeService.getMenus(categoryId, page, limit);
   }
+
+  @Get('available-time-slots')
+  @ApiQuery({ name: 'date', required: true, type: String, description: 'YYYY-MM-DD' })
+  getAvailableTimeSlots(@Query('date') date: string) {
+    return this.micrositeService.getAvailableTimeSlots(date);
+  }
 }
