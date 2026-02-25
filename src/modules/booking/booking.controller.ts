@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UploadedFile, UseInterceptors, UseGuards, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiParam, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -91,5 +91,11 @@ export class BookingController {
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.bookingService.remove(id);
+  }
+
+  @Get('available-time-slots')
+  @ApiQuery({ name: 'date', required: true, type: String, description: 'YYYY-MM-DD' })
+  getAvailableTimeSlots(@Query('date') date: string) {
+    return this.bookingService.getAvailableTimeSlots(date);
   }
 }
