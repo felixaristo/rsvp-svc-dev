@@ -120,7 +120,8 @@ export class BookingService {
 
   async getAvailableTimeSlots(date: string, branchId: number = 1): Promise<string[]> {
     const tenant = await this.tenantService.forMicrosite(1);
-    const { openHours, closedHours } = tenant;
+    const { openHours, closedHours, stayDuration } = tenant;
+    const duration = stayDuration || 60;
 
     if (!openHours || !closedHours) {
       return [];
@@ -146,19 +147,22 @@ export class BookingService {
         const [coStartH, coStartM] = co.fromTime.split(':').map(Number);
         const [coEndH, coEndM] = co.untilTime.split(':').map(Number);
         
-        const slotTimeVal = currHour * 60 + currMinute;
+        const slotStartVal = currHour * 60 + currMinute;
+        const slotEndVal = slotStartVal + duration;
+
         const coStartVal = coStartH * 60 + coStartM;
         const coEndVal = coEndH * 60 + coEndM;
 
         // Slot is closed if it falls within [start, end) of a CloseOut period
-        return slotTimeVal >= coStartVal && slotTimeVal < coEndVal;
+        // OR if the booking duration overlaps with the CloseOut period
+        // Overlap logic: Interval A [startA, endA) overlaps Interval B [startB, endB) if startA < endB && startB < endA
+        return slotStartVal < coEndVal && coStartVal < slotEndVal;
       });
 
       if (!isClosed) {
         slots.push(timeString);
       }
 
-      // Increment 15 mins
       currMinute += 15;
       if (currMinute >= 60) {
         currHour += 1;
