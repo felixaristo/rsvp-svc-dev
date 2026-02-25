@@ -9,10 +9,11 @@ import { Table } from '../table-management/entities/table.entity';
 import { Menu } from '../menu-management/entities/menu.entity';
 import { Branch } from '../branch/entities/branch.entity';
 import { TenantModule } from '../tenant/tenant.module';
+import { CloseOut } from '../close-out/entities/close-out.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Booking, Customer, Table, Menu, Branch]),
+    TypeOrmModule.forFeature([Booking, Customer, Table, Menu, Branch, CloseOut]),
     CustomerModule,
     TenantModule,
   ],

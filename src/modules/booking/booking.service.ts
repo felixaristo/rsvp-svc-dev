@@ -11,6 +11,7 @@ import { Menu } from '../menu-management/entities/menu.entity';
 import { BookingMenu } from './entities/booking-menu.entity';
 import { TenantService } from '../tenant/tenant.service';
 import { Branch } from '../branch/entities/branch.entity';
+import { CloseOut } from '../close-out/entities/close-out.entity';
 
 @Injectable()
 export class BookingService {
@@ -25,6 +26,8 @@ export class BookingService {
     private readonly menuRepository: Repository<Menu>,
     @InjectRepository(Branch)
     private readonly branchRepository: Repository<Branch>,
+    @InjectRepository(CloseOut)
+    private readonly closeOutRepository: Repository<CloseOut>,
     private readonly tenantService: TenantService,
   ) {}
 
@@ -124,7 +127,7 @@ export class BookingService {
     }
   }
 
-  async findAll(page: number, limit: number, filterDto?: GetBookingsFilterDto): Promise<{ items: Booking[]; total: number; page: number; limit: number }> {
+  async findAll(page: number, limit: number, filterDto?: GetBookingsFilterDto): Promise<{ items: Booking[]; total: number; page: number; limit: number; closeOuts?: CloseOut[] }> {
     const { fromDate, toDate, status } = filterDto || {};
     const where: any = {};
 
@@ -150,11 +153,57 @@ export class BookingService {
       },
     });
 
+    let closeOuts: any[] = [];
+    const closeOutWhere: any = {};
+
+    if (fromDate && toDate) {
+      closeOutWhere.fromDate = LessThanOrEqual(toDate);
+      closeOutWhere.toDate = MoreThanOrEqual(fromDate);
+    } else if (fromDate) {
+      closeOutWhere.toDate = MoreThanOrEqual(fromDate);
+    } else if (toDate) {
+      closeOutWhere.fromDate = LessThanOrEqual(toDate);
+    }
+
+    if (Object.keys(closeOutWhere).length > 0) {
+      const rawCloseOuts = await this.closeOutRepository.find({
+        where: closeOutWhere,
+        relations: ['category'],
+      });
+
+      const categoryIds = [...new Set(rawCloseOuts.map(c => c.category.id))];
+      
+      let tables: Table[] = [];
+      if (categoryIds.length > 0) {
+        tables = await this.tableRepository.find({
+          where: {
+            category: { id: In(categoryIds) },
+          },
+          relations: ['category'],
+        });
+      }
+
+      closeOuts = rawCloseOuts.map(c => {
+        const categoryTables = tables
+          .filter(t => t.category.id === c.category.id)
+          .map(t => t.id);
+
+        return {
+          fromDate: c.fromDate,
+          toDate: c.toDate,
+          fromTime: c.fromTime,
+          untilTime: c.untilTime,
+          tableIds: categoryTables,
+        };
+      });
+    }
+
     return {
       items,
       total,
       page,
       limit,
+      closeOuts,
     };
   }
 

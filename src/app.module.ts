@@ -28,6 +28,8 @@ import { Branch } from './modules/branch/entities/branch.entity';
 import { MicrositeModule } from './modules/microsite/microsite.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { BranchModule } from './modules/branch/branch.module';
+import { CloseOutModule } from './modules/close-out/close-out.module';
+import { CloseOut } from './modules/close-out/entities/close-out.entity';
 
 @Module({
   imports: [
@@ -39,7 +41,7 @@ import { BranchModule } from './modules/branch/branch.module';
       username: process.env.DB_USERNAME ?? 'postgres',
       password: process.env.DB_PASSWORD ?? 'postgres',
       database: process.env.DB_NAME || 'rsvp_db',
-      entities: [User, Category, Table, Promotion, MenuCategory, Menu, Customer, Booking, BookingMenu, Tenant, Branch],
+      entities: [User, Category, Table, Promotion, MenuCategory, Menu, Customer, Booking, BookingMenu, Tenant, Branch, CloseOut],
       synchronize: true,
     }),
     UsersModule,
@@ -56,6 +58,7 @@ import { BranchModule } from './modules/branch/branch.module';
     MicrositeModule,
     DashboardModule,
     BranchModule,
+    CloseOutModule,
   ],
   controllers: [AppController],
   providers: [AppService],
