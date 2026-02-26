@@ -356,7 +356,7 @@ export class BookingService {
     }
   }
 
-  async findAll(page: number, limit: number, filterDto?: GetBookingsFilterDto): Promise<{ items: Booking[]; total: number; page: number; limit: number; closeOuts?: CloseOut[] }> {
+  async findAll(page: number, limit: number, filterDto?: GetBookingsFilterDto): Promise<{ items: Booking[]; total: number; page: number; limit: number; closeOuts?: CloseOut[]; totalBooking: number; totalSpent: number; totalPax: number }> {
     const { fromDate, toDate, status } = filterDto || {};
     const where: any = {};
 
@@ -381,6 +381,26 @@ export class BookingService {
         id: 'DESC',
       },
     });
+
+    // Calculate totals
+    const queryBuilder = this.bookingRepository.createQueryBuilder('booking');
+    
+    if (fromDate && toDate) {
+      queryBuilder.andWhere('booking.date BETWEEN :fromDate AND :toDate', { fromDate, toDate });
+    } else if (fromDate) {
+      queryBuilder.andWhere('booking.date >= :fromDate', { fromDate });
+    } else if (toDate) {
+      queryBuilder.andWhere('booking.date <= :toDate', { toDate });
+    }
+
+    if (status) {
+      queryBuilder.andWhere('booking.status = :status', { status });
+    }
+
+    const { totalSpent, totalPax } = await queryBuilder
+      .select('SUM(booking.spendMoney)', 'totalSpent')
+      .addSelect('SUM(booking.totalPax)', 'totalPax')
+      .getRawOne();
 
     let closeOuts: any[] = [];
     const closeOutWhere: any = {};
@@ -434,6 +454,9 @@ export class BookingService {
       page,
       limit,
       closeOuts,
+      totalBooking: total,
+      totalSpent: parseFloat(totalSpent || '0'),
+      totalPax: parseInt(totalPax || '0', 10),
     };
   }
 
