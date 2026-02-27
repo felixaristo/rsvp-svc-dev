@@ -212,7 +212,7 @@ export class BookingService {
     return allCategories.filter(c => !closedCategoryIds.has(c.id));
   }
 
-  async getAvailableTablesByCategory(date: string, time: string, categoryId: number, branchId: number = 1): Promise<Table[]> {
+  async getAvailableTablesByCategory(date: string, time: string, categoryId: number, bookingId?: number, branchId: number = 1): Promise<Table[]> {
     const tenant = await this.tenantService.forMicrosite(1);
     
     // 1. Get all tables in the category
@@ -247,6 +247,11 @@ export class BookingService {
     const occupiedTableIds = new Set<number>();
     
     for (const b of existingBookings) {
+      // Skip the current booking if bookingId is provided
+      if (bookingId && b.id === bookingId) {
+        continue;
+      }
+
       const bStart = this.parseDateTime(b.date, b.time);
       const bEnd = b.expectedLeaveTime 
         ? this.parseDateTime(b.date, b.expectedLeaveTime)

@@ -60,12 +60,15 @@ export class BookingController {
   @ApiQuery({ name: 'date', required: true, type: String, description: 'YYYY-MM-DD' })
   @ApiQuery({ name: 'time', required: true, type: String, description: 'HH:mm' })
   @ApiQuery({ name: 'categoryId', required: true, type: Number })
+  @ApiQuery({ name: 'bookingId', required: false, type: Number })
   getAvailableTables(
     @Query('date') date: string,
     @Query('time') time: string,
-    @Query('categoryId', ParseIntPipe) categoryId: number
+    @Query('categoryId', ParseIntPipe) categoryId: number,
+    @Query('bookingId') bookingId?: number
   ) {
-    return this.bookingService.getAvailableTablesByCategory(date, time, categoryId);
+    const parsedBookingId = bookingId ? parseInt(bookingId.toString()) : undefined;
+    return this.bookingService.getAvailableTablesByCategory(date, time, categoryId, parsedBookingId);
   }
 
   @Get(':page/:limit')
