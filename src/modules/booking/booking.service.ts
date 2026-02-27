@@ -646,20 +646,21 @@ export class BookingService {
       } catch (error) {
         console.error('Error calculating expected leave time:', error);
       }
-    } 
-    
-    // else if (bookingData.status === BookingStatus.COMPLETED) {
-    //   // Use UTC+7 for leaveTime
-    //   const now = new Date();
-    //   const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    //   const wibTime = new Date(utc + (7 * 3600000));
-      
-    //   const hours = wibTime.getHours();
-    //   const minutes = wibTime.getMinutes();
-    //   const hoursStr = String(hours).padStart(2, '0');
-    //   const minutesStr = String(minutes).padStart(2, '0');
-    //   updatePayload.leaveTime = `${hoursStr}:${minutesStr}`;
-    // }
+    } else if (bookingData.status === BookingStatus.COMPLETED) {
+      const existingBooking = await this.bookingRepository.findOne({ where: { id } });
+      if (existingBooking && !existingBooking.leaveTime) {
+        // Use UTC+7 for leaveTime
+        const now = new Date();
+        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const wibTime = new Date(utc + (7 * 3600000));
+        
+        const hours = wibTime.getHours();
+        const minutes = wibTime.getMinutes();
+        const hoursStr = String(hours).padStart(2, '0');
+        const minutesStr = String(minutes).padStart(2, '0');
+        updatePayload.leaveTime = `${hoursStr}:${minutesStr}`;
+      }
+    }
 
     if (bookingData.expectedLeaveTime !== undefined) {
       updatePayload.expectedLeaveTime = bookingData.expectedLeaveTime;
