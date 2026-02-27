@@ -476,7 +476,7 @@ export class BookingService {
       skip: (page - 1) * limit,
       take: limit,
       where,
-      relations: ['customer', 'tables', 'branch', 'bookingMenus', 'bookingMenus.menu'],
+      relations: ['customer', 'tables', 'branch', 'bookingMenus', 'bookingMenus.menu', 'category'],
       order: {
         id: 'DESC',
       },
