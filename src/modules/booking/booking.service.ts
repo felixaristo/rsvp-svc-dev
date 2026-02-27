@@ -122,6 +122,8 @@ export class BookingService {
   }
 
   async getAvailableTimeSlots(date: string, branchId: number = 1): Promise<string[]> {
+    console.log(date);
+    
     const tenant = await this.tenantService.forMicrosite(1);
     const { openHours, closedHours, stayDuration } = tenant;
     const duration = stayDuration || 60;
@@ -134,37 +136,39 @@ export class BookingService {
     let [currHour, currMinute] = openHours.split(':').map(Number);
     const [endHour, endMinute] = closedHours.split(':').map(Number);
 
-    const closeOuts = await this.closeOutRepository.find({
-      where: {
-        branch: { id: branchId },
-        fromDate: LessThanOrEqual(new Date(date)),
-        toDate: MoreThanOrEqual(new Date(date)),
-      },
-    });
+    // const closeOuts = await this.closeOutRepository.find({
+    //   where: {
+    //     branch: { id: branchId },
+    //     fromDate: LessThanOrEqual(new Date(date)),
+    //     toDate: MoreThanOrEqual(new Date(date)),
+    //   },
+    // });
 
     while (currHour < endHour || (currHour === endHour && currMinute < endMinute)) {
       const timeString = `${String(currHour).padStart(2, '0')}:${String(currMinute).padStart(2, '0')}`;
       
       // Check if this slot is in any close out
-      const isClosed = closeOuts.some(co => {
-        const [coStartH, coStartM] = co.fromTime.split(':').map(Number);
-        const [coEndH, coEndM] = co.untilTime.split(':').map(Number);
+      // const isClosed = closeOuts.some(co => {
+      //   const [coStartH, coStartM] = co.fromTime.split(':').map(Number);
+      //   const [coEndH, coEndM] = co.untilTime.split(':').map(Number);
         
-        const slotStartVal = currHour * 60 + currMinute;
-        const slotEndVal = slotStartVal + duration;
+      //   const slotStartVal = currHour * 60 + currMinute;
+      //   const slotEndVal = slotStartVal + duration;
 
-        const coStartVal = coStartH * 60 + coStartM;
-        const coEndVal = coEndH * 60 + coEndM;
+      //   const coStartVal = coStartH * 60 + coStartM;
+      //   const coEndVal = coEndH * 60 + coEndM;
 
-        // Slot is closed if it falls within [start, end) of a CloseOut period
-        // OR if the booking duration overlaps with the CloseOut period
-        // Overlap logic: Interval A [startA, endA) overlaps Interval B [startB, endB) if startA < endB && startB < endA
-        return slotStartVal < coEndVal && coStartVal < slotEndVal;
-      });
+      //   // Slot is closed if it falls within [start, end) of a CloseOut period
+      //   // OR if the booking duration overlaps with the CloseOut period
+      //   // Overlap logic: Interval A [startA, endA) overlaps Interval B [startB, endB) if startA < endB && startB < endA
+      //   return slotStartVal < coEndVal && coStartVal < slotEndVal;
+      // });
 
-      if (!isClosed) {
-        slots.push(timeString);
-      }
+      // if (!isClosed) {
+      //   slots.push(timeString);
+      // }
+
+      slots.push(timeString);
 
       currMinute += 15;
       if (currMinute >= 60) {

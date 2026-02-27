@@ -71,6 +71,12 @@ export class BookingController {
     return this.bookingService.getAvailableTablesByCategory(date, time, categoryId, parsedBookingId);
   }
 
+  @Get('available-time-slots')
+  @ApiQuery({ name: 'date', required: true, type: String, description: 'YYYY-MM-DD' })
+  getAvailableTimeSlots(@Query('date') date: string) {
+    return this.bookingService.getAvailableTimeSlots(date);
+  }
+
   @Get(':page/:limit')
   @ApiParam({ name: 'page', required: true, type: Number })
   @ApiParam({ name: 'limit', required: true, type: Number })
@@ -115,9 +121,4 @@ export class BookingController {
     return this.bookingService.remove(id);
   }
 
-  @Get('available-time-slots')
-  @ApiQuery({ name: 'date', required: true, type: String, description: 'YYYY-MM-DD' })
-  getAvailableTimeSlots(@Query('date') date: string) {
-    return this.bookingService.getAvailableTimeSlots(date);
-  }
 }
