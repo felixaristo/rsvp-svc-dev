@@ -3,6 +3,7 @@ import { Customer } from '../../customer/entities/customer.entity';
 import { Table } from '../../table-management/entities/table.entity';
 import { BookingMenu } from './booking-menu.entity';
 import { FileUrlTransformer } from '../../../common/transformers/file-url.transformer';
+import { Category } from '../../table-categories/entities/category.entity';
 import { Branch } from '../../branch/entities/branch.entity';
 
 export enum BookingStatus {
@@ -63,6 +64,10 @@ export class Booking {
   @ManyToOne(() => Branch, { nullable: false })
   @JoinColumn({ name: 'branch_id' })
   branch: Branch;
+
+  @ManyToOne(() => Category, { nullable: true })
+  @JoinColumn({ name: 'category_id' })
+  category: Category;
 
   @OneToMany(() => BookingMenu, (bookingMenu) => bookingMenu.booking, { cascade: true })
   bookingMenus: BookingMenu[];

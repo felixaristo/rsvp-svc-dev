@@ -71,4 +71,8 @@ export class MicrositeService {
   async getAvailableTimeSlots(date: string) {
     return this.bookingService.getAvailableTimeSlots(date);
   }
+
+  async getAvailableTableCategories(date: string, time: string) {
+    return this.bookingService.getAvailableTableCategories(date, time);
+  }
 }

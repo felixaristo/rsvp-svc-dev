@@ -49,6 +49,25 @@ export class BookingController {
     return this.bookingService.create(createBookingDto, photoPath);
   }
 
+  @Get('available-table-categories')
+  @ApiQuery({ name: 'date', required: true, type: String, description: 'YYYY-MM-DD' })
+  @ApiQuery({ name: 'time', required: true, type: String, description: 'HH:mm' })
+  getAvailableTableCategories(@Query('date') date: string, @Query('time') time: string) {
+    return this.bookingService.getAvailableTableCategories(date, time);
+  }
+
+  @Get('available-tables')
+  @ApiQuery({ name: 'date', required: true, type: String, description: 'YYYY-MM-DD' })
+  @ApiQuery({ name: 'time', required: true, type: String, description: 'HH:mm' })
+  @ApiQuery({ name: 'categoryId', required: true, type: Number })
+  getAvailableTables(
+    @Query('date') date: string,
+    @Query('time') time: string,
+    @Query('categoryId', ParseIntPipe) categoryId: number
+  ) {
+    return this.bookingService.getAvailableTablesByCategory(date, time, categoryId);
+  }
+
   @Get(':page/:limit')
   @ApiParam({ name: 'page', required: true, type: Number })
   @ApiParam({ name: 'limit', required: true, type: Number })

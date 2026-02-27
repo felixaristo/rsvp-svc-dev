@@ -99,6 +99,12 @@ export class CreateBookingDto {
   @IsNumber()
   branchId?: number;
 
+  @ApiPropertyOptional({ example: 1, description: 'Table Category ID' })
+  @IsOptional()
+  @Transform(({ value }) => value ? parseInt(value) : undefined)
+  @IsNumber()
+  categoryId?: number;
+
   @ApiPropertyOptional({ example: '[{"menuId":1,"qty":2}]' })
   @IsOptional()
   menus?: any;

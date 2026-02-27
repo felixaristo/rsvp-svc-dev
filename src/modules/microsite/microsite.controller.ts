@@ -59,4 +59,11 @@ export class MicrositeController {
   getAvailableTimeSlots(@Query('date') date: string) {
     return this.micrositeService.getAvailableTimeSlots(date);
   }
+
+  @Get('available-table-categories')
+  @ApiQuery({ name: 'date', required: true, type: String, description: 'YYYY-MM-DD' })
+  @ApiQuery({ name: 'time', required: true, type: String, description: 'HH:mm' })
+  getAvailableTableCategories(@Query('date') date: string, @Query('time') time: string) {
+    return this.micrositeService.getAvailableTableCategories(date, time);
+  }
 }

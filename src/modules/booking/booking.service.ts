@@ -12,6 +12,7 @@ import { BookingMenu } from './entities/booking-menu.entity';
 import { TenantService } from '../tenant/tenant.service';
 import { Branch } from '../branch/entities/branch.entity';
 import { CloseOut } from '../close-out/entities/close-out.entity';
+import { Category } from '../table-categories/entities/category.entity';
 
 @Injectable()
 export class BookingService {
@@ -28,6 +29,8 @@ export class BookingService {
     private readonly branchRepository: Repository<Branch>,
     @InjectRepository(CloseOut)
     private readonly closeOutRepository: Repository<CloseOut>,
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
     private readonly tenantService: TenantService,
   ) {}
 
@@ -173,10 +176,95 @@ export class BookingService {
     return slots;
   }
 
+  async getAvailableTableCategories(date: string, time: string, branchId: number = 1): Promise<Category[]> {
+    const tenant = await this.tenantService.forMicrosite(1);
+    const duration = tenant.stayDuration || 60;
+
+    const [reqStartH, reqStartM] = time.split(':').map(Number);
+    const reqStartVal = reqStartH * 60 + reqStartM;
+    const reqEndVal = reqStartVal + duration;
+
+    const closeOuts = await this.closeOutRepository.find({
+      where: {
+        branch: { id: branchId },
+        fromDate: LessThanOrEqual(new Date(date)),
+        toDate: MoreThanOrEqual(new Date(date)),
+      },
+      relations: ['categories'],
+    });
+
+    const closedCategoryIds = new Set<number>();
+    
+    for (const co of closeOuts) {
+      const [coStartH, coStartM] = co.fromTime.split(':').map(Number);
+      const [coEndH, coEndM] = co.untilTime.split(':').map(Number);
+      
+      const coStartVal = coStartH * 60 + coStartM;
+      const coEndVal = coEndH * 60 + coEndM;
+
+      // Check overlap: Interval A [startA, endA) overlaps Interval B [startB, endB) if startA < endB && startB < endA
+      if (reqStartVal < coEndVal && coStartVal < reqEndVal) {
+        co.categories.forEach(c => closedCategoryIds.add(c.id));
+      }
+    }
+
+    const allCategories = await this.categoryRepository.find();
+    return allCategories.filter(c => !closedCategoryIds.has(c.id));
+  }
+
+  async getAvailableTablesByCategory(date: string, time: string, categoryId: number, branchId: number = 1): Promise<Table[]> {
+    const tenant = await this.tenantService.forMicrosite(1);
+    
+    // 1. Get all tables in the category
+    const allTables = await this.tableRepository.find({
+      where: { 
+        branch: { id: branchId },
+        category: { id: categoryId }
+      },
+      order: { covers: 'ASC' }
+    });
+
+    // 2. Find existing bookings to determine occupied tables
+    const existingBookings = await this.bookingRepository.find({
+      where: {
+        date: date,
+        status: In([BookingStatus.CONFIRM, BookingStatus.SEATED, BookingStatus.WAITING_LIST]),
+        branch: { id: branchId }
+      },
+      relations: ['tables']
+    });
+
+    const requestedStart = this.parseDateTime(date, time);
+    let effectiveRequestedEnd = requestedStart;
+    
+    if (tenant.stayDuration) {
+       effectiveRequestedEnd = new Date(requestedStart.getTime() + tenant.stayDuration * 60000);
+    } else {
+       // Default 60 mins if no stayDuration configured
+       effectiveRequestedEnd = new Date(requestedStart.getTime() + 60 * 60000);
+    }
+
+    const occupiedTableIds = new Set<number>();
+    
+    for (const b of existingBookings) {
+      const bStart = this.parseDateTime(b.date, b.time);
+      const bEnd = b.expectedLeaveTime 
+        ? this.parseDateTime(b.date, b.expectedLeaveTime)
+        : new Date(bStart.getTime() + (tenant.stayDuration || 60) * 60000);
+
+      // Check overlap
+      if (requestedStart < bEnd && effectiveRequestedEnd > bStart) {
+         b.tables.forEach(t => occupiedTableIds.add(t.id));
+      }
+    }
+
+    return allTables.filter(t => !occupiedTableIds.has(t.id));
+  }
+
   async create(createBookingDto: CreateBookingDto, photoPath?: string): Promise<Booking> {
     try {
       console.log('Creating booking with DTO:', JSON.stringify(createBookingDto));
-      const { customerId, tableIds, menus, branchId, totalPax, ...bookingData } = createBookingDto;
+      const { customerId, tableIds, menus, branchId, categoryId, totalPax, ...bookingData } = createBookingDto;
       
       const customer = await this.customerRepository.findOne({ where: { id: customerId } });
       if (!customer) {
@@ -187,6 +275,14 @@ export class BookingService {
       const branch = await this.branchRepository.findOne({ where: { id: effectiveBranchId } });
       if (!branch) {
         throw new NotFoundException(`Branch with ID ${effectiveBranchId} not found`);
+      }
+
+      let category: Category | undefined;
+      if (categoryId) {
+        category = await this.categoryRepository.findOne({ where: { id: categoryId } }) || undefined;
+        if (!category) {
+          throw new NotFoundException(`Category with ID ${categoryId} not found`);
+        }
       }
 
       // Handle expected leave time and auto table assignment
@@ -210,7 +306,10 @@ export class BookingService {
         // Auto assign tables based on pax
         // Find available tables
         const allTables = await this.tableRepository.find({
-          where: { branch: { id: effectiveBranchId } },
+          where: { 
+            branch: { id: effectiveBranchId },
+            ...(category ? { category: { id: category.id } } : {})
+          },
           order: { covers: 'ASC' }
         });
 
@@ -300,6 +399,7 @@ export class BookingService {
         channel: bookingData.channel ?? '',
         expectedLeaveTime,
         customer,
+        category,
         tables,
         branch,
         bookingCode: this.generateBookingCode(),
@@ -472,12 +572,20 @@ export class BookingService {
   }
 
   async update(id: number, updateBookingDto: UpdateBookingDto, photoPath?: string): Promise<Booking> {
-    const { customerId, tableIds, menus, branchId, ...bookingData } = updateBookingDto;
+    const { customerId, tableIds, menus, branchId, categoryId, ...bookingData } = updateBookingDto;
 
     const updatePayload: Partial<Booking> & { id: number } = {
       id,
       ...bookingData,
     };
+
+    if (categoryId) {
+      const category = await this.categoryRepository.findOne({ where: { id: categoryId } });
+      if (!category) {
+        throw new NotFoundException(`Category with ID ${categoryId} not found`);
+      }
+      updatePayload.category = category;
+    }
 
     if (bookingData.status === BookingStatus.CONFIRM || bookingData.status === BookingStatus.SEATED) {
       try {
