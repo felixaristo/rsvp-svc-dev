@@ -7,6 +7,7 @@ import {
   UploadedFile,
   UseInterceptors,
   Query,
+  Param,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -99,5 +100,12 @@ export class MicrositeController {
     @Query('time') time: string,
   ) {
     return this.micrositeService.getAvailableTableCategories(date, time);
+  }
+
+  @Get('bookings/:code')
+  @ApiOperation({ summary: 'Get booking details by booking code' })
+  @KeepNulls()
+  getBookingByCode(@Param('code') code: string) {
+    return this.micrositeService.findBookingByCode(code);
   }
 }

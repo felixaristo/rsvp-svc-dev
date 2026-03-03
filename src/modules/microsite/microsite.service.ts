@@ -78,4 +78,8 @@ export class MicrositeService {
   async getAvailableTableCategories(date: string, time: string) {
     return this.bookingService.getAvailableTableCategories(date, time);
   }
+
+  async findBookingByCode(code: string) {
+    return this.bookingService.findOne(code);
+  }
 }

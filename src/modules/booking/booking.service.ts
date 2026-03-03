@@ -486,7 +486,12 @@ export class BookingService {
         }
       }
 
-      const needDpFlag = bookingData.needDp === true;
+      // Determine needDp based on tenant settings (minimumPax)
+      let needDpFlag = false;
+      if (tenant.minimumPax && totalPax >= tenant.minimumPax) {
+        needDpFlag = true;
+      }
+
       const computedStatusDp = needDpFlag
         ? photoPath
           ? 'completed'
@@ -691,9 +696,12 @@ export class BookingService {
     };
   }
 
-  async findOne(id: number): Promise<Booking> {
+  async findOne(idOrCode: number | string): Promise<Booking> {
+    const whereCondition: FindOptionsWhere<Booking> =
+      typeof idOrCode === 'string' ? { bookingCode: idOrCode } : { id: idOrCode };
+
     const booking = await this.bookingRepository.findOne({
-      where: { id },
+      where: whereCondition,
       relations: [
         'customer',
         'tables',
@@ -703,7 +711,7 @@ export class BookingService {
       ],
     });
     if (!booking) {
-      throw new NotFoundException(`Booking with ID ${id} not found`);
+      throw new NotFoundException(`Booking with ID/Code ${idOrCode} not found`);
     }
     return booking;
   }

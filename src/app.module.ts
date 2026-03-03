@@ -30,6 +30,8 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { BranchModule } from './modules/branch/branch.module';
 import { CloseOutModule } from './modules/close-out/close-out.module';
 import { CloseOut } from './modules/close-out/entities/close-out.entity';
+import { NewsToday } from './modules/news-today/entities/news-today.entity';
+import { NewsTodayModule } from './modules/news-today/news-today.module';
 
 @Module({
   imports: [
@@ -41,7 +43,7 @@ import { CloseOut } from './modules/close-out/entities/close-out.entity';
       username: process.env.DB_USERNAME ?? 'postgres',
       password: process.env.DB_PASSWORD ?? 'postgres',
       database: process.env.DB_NAME || 'rsvp_db',
-      entities: [User, Category, Table, Promotion, MenuCategory, Menu, Customer, Booking, BookingMenu, Tenant, Branch, CloseOut],
+      entities: [User, Category, Table, Promotion, MenuCategory, Menu, Customer, Booking, BookingMenu, Tenant, Branch, CloseOut, NewsToday],
       synchronize: true,
     }),
     UsersModule,
@@ -59,6 +61,7 @@ import { CloseOut } from './modules/close-out/entities/close-out.entity';
     DashboardModule,
     BranchModule,
     CloseOutModule,
+    NewsTodayModule,
   ],
   controllers: [AppController],
   providers: [AppService],
