@@ -1,5 +1,24 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UploadedFile, UseInterceptors, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ParseIntPipe,
+  UploadedFile,
+  UseInterceptors,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiConsumes,
+  ApiBody,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -16,7 +35,11 @@ function ensureDir(dir: string) {
   }
 }
 
-function filenameGenerator(_req: any, file: any, cb: (error: Error | null, filename: string) => void) {
+function filenameGenerator(
+  _req: any,
+  file: any,
+  cb: (error: Error | null, filename: string) => void,
+) {
   const ext = path.extname(file.originalname);
   const base = path.basename(file.originalname, ext).replace(/\s+/g, '_');
   cb(null, `${base}_${Date.now()}${ext}`);
@@ -90,7 +113,7 @@ export class TenantController {
   ) {
     const logoPath = file ? path.relative(process.cwd(), file.path) : undefined;
     return this.tenantService.update(id, updateTenantDto, logoPath);
-  } 
+  }
 
   // @Delete(':id')
   // remove(@Param('id', ParseIntPipe) id: number) {

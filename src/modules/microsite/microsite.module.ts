@@ -10,7 +10,15 @@ import { MenuModule } from '../menu-management/menu.module';
 import { MenuCategoryModule } from '../menu-categories/menu-category.module';
 
 @Module({
-  imports: [BookingModule, TenantModule, ConfigModule, CustomerModule, PromotionModule, MenuModule, MenuCategoryModule],
+  imports: [
+    BookingModule,
+    TenantModule,
+    ConfigModule,
+    CustomerModule,
+    PromotionModule,
+    MenuModule,
+    MenuCategoryModule,
+  ],
   controllers: [MicrositeController],
   providers: [MicrositeService],
 })

@@ -14,7 +14,15 @@ import { Category } from '../table-categories/entities/category.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Booking, Customer, Table, Menu, Branch, CloseOut, Category]),
+    TypeOrmModule.forFeature([
+      Booking,
+      Customer,
+      Table,
+      Menu,
+      Branch,
+      CloseOut,
+      Category,
+    ]),
     CustomerModule,
     TenantModule,
   ],

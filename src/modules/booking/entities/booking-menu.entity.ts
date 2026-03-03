@@ -1,4 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Booking } from './booking.entity';
 import { Menu } from '../../menu-management/entities/menu.entity';
 
@@ -12,11 +20,13 @@ export class BookingMenu {
 
   @Column({ name: 'menu_id' })
   menuId: number;
-  
+
   @Column({ default: 1 })
   qty: number;
 
-  @ManyToOne(() => Booking, (booking) => booking.bookingMenus, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Booking, (booking) => booking.bookingMenus, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'booking_id' })
   booking: Booking;
 

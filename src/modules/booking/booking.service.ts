@@ -1,6 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, Between, MoreThanOrEqual, LessThanOrEqual, FindOptionsWhere } from 'typeorm';
+import {
+  Repository,
+  In,
+  Between,
+  MoreThanOrEqual,
+  LessThanOrEqual,
+  FindOptionsWhere,
+} from 'typeorm';
 import { Booking, BookingStatus } from './entities/booking.entity';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
@@ -77,7 +84,11 @@ export class BookingService {
     );
   }
 
-  private calculateExpectedLeaveTime(date: string, time: string, durationMinutes: number): string {
+  private calculateExpectedLeaveTime(
+    date: string,
+    time: string,
+    durationMinutes: number,
+  ): string {
     const timeStr = time.trim();
     let hours: number;
     let minutes: number;
@@ -111,7 +122,9 @@ export class BookingService {
     );
 
     if (!isNaN(bookingDateTime.getTime())) {
-      const expectedLeaveDate = new Date(bookingDateTime.getTime() + durationMinutes * 60000);
+      const expectedLeaveDate = new Date(
+        bookingDateTime.getTime() + durationMinutes * 60000,
+      );
       const leaveHours = expectedLeaveDate.getHours();
       const leaveMinutes = expectedLeaveDate.getMinutes();
       const hoursStr = String(leaveHours).padStart(2, '0');
@@ -121,9 +134,12 @@ export class BookingService {
     return '';
   }
 
-  async getAvailableTimeSlots(date: string, branchId: number = 1): Promise<string[]> {
+  async getAvailableTimeSlots(
+    date: string,
+    branchId: number = 1,
+  ): Promise<string[]> {
     console.log(date);
-    
+
     const tenant = await this.tenantService.forMicrosite(1);
     const { openHours, closedHours, stayDuration } = tenant;
     const duration = stayDuration || 60;
@@ -144,14 +160,17 @@ export class BookingService {
     //   },
     // });
 
-    while (currHour < endHour || (currHour === endHour && currMinute < endMinute)) {
+    while (
+      currHour < endHour ||
+      (currHour === endHour && currMinute < endMinute)
+    ) {
       const timeString = `${String(currHour).padStart(2, '0')}:${String(currMinute).padStart(2, '0')}`;
-      
+
       // Check if this slot is in any close out
       // const isClosed = closeOuts.some(co => {
       //   const [coStartH, coStartM] = co.fromTime.split(':').map(Number);
       //   const [coEndH, coEndM] = co.untilTime.split(':').map(Number);
-        
+
       //   const slotStartVal = currHour * 60 + currMinute;
       //   const slotEndVal = slotStartVal + duration;
 
@@ -180,7 +199,11 @@ export class BookingService {
     return slots;
   }
 
-  async getAvailableTableCategories(date: string, time: string, branchId: number = 1): Promise<Category[]> {
+  async getAvailableTableCategories(
+    date: string,
+    time: string,
+    branchId: number = 1,
+  ): Promise<Category[]> {
     const tenant = await this.tenantService.forMicrosite(1);
     const duration = tenant.stayDuration || 60;
 
@@ -198,58 +221,70 @@ export class BookingService {
     });
 
     const closedCategoryIds = new Set<number>();
-    
+
     for (const co of closeOuts) {
       const [coStartH, coStartM] = co.fromTime.split(':').map(Number);
       const [coEndH, coEndM] = co.untilTime.split(':').map(Number);
-      
+
       const coStartVal = coStartH * 60 + coStartM;
       const coEndVal = coEndH * 60 + coEndM;
 
       // Check overlap: Interval A [startA, endA) overlaps Interval B [startB, endB) if startA < endB && startB < endA
       if (reqStartVal < coEndVal && coStartVal < reqEndVal) {
-        co.categories.forEach(c => closedCategoryIds.add(c.id));
+        co.categories.forEach((c) => closedCategoryIds.add(c.id));
       }
     }
 
     const allCategories = await this.categoryRepository.find();
-    return allCategories.filter(c => !closedCategoryIds.has(c.id));
+    return allCategories.filter((c) => !closedCategoryIds.has(c.id));
   }
 
-  async getAvailableTablesByCategory(date: string, time: string, categoryId: number, bookingId?: number, branchId: number = 1): Promise<Table[]> {
+  async getAvailableTablesByCategory(
+    date: string,
+    time: string,
+    categoryId: number,
+    bookingId?: number,
+    branchId: number = 1,
+  ): Promise<Table[]> {
     const tenant = await this.tenantService.forMicrosite(1);
-    
+
     // 1. Get all tables in the category
     const allTables = await this.tableRepository.find({
-      where: { 
+      where: {
         branch: { id: branchId },
-        category: { id: categoryId }
+        category: { id: categoryId },
       },
-      order: { covers: 'ASC' }
+      order: { covers: 'ASC' },
     });
 
     // 2. Find existing bookings to determine occupied tables
     const existingBookings = await this.bookingRepository.find({
       where: {
         date: date,
-        status: In([BookingStatus.CONFIRM, BookingStatus.SEATED, BookingStatus.WAITING_LIST]),
-        branch: { id: branchId }
+        status: In([
+          BookingStatus.CONFIRM,
+          BookingStatus.SEATED,
+          BookingStatus.WAITING_LIST,
+        ]),
+        branch: { id: branchId },
       },
-      relations: ['tables']
+      relations: ['tables'],
     });
 
     const requestedStart = this.parseDateTime(date, time);
     let effectiveRequestedEnd = requestedStart;
-    
+
     if (tenant.stayDuration) {
-       effectiveRequestedEnd = new Date(requestedStart.getTime() + tenant.stayDuration * 60000);
+      effectiveRequestedEnd = new Date(
+        requestedStart.getTime() + tenant.stayDuration * 60000,
+      );
     } else {
-       // Default 60 mins if no stayDuration configured
-       effectiveRequestedEnd = new Date(requestedStart.getTime() + 60 * 60000);
+      // Default 60 mins if no stayDuration configured
+      effectiveRequestedEnd = new Date(requestedStart.getTime() + 60 * 60000);
     }
 
     const occupiedTableIds = new Set<number>();
-    
+
     for (const b of existingBookings) {
       // Skip the current booking if bookingId is provided
       if (bookingId && b.id === bookingId) {
@@ -257,40 +292,65 @@ export class BookingService {
       }
 
       const bStart = this.parseDateTime(b.date, b.time);
-      const bEnd = b.expectedLeaveTime 
+      const bEnd = b.expectedLeaveTime
         ? this.parseDateTime(b.date, b.expectedLeaveTime)
         : new Date(bStart.getTime() + (tenant.stayDuration || 60) * 60000);
 
       // Check overlap
       if (requestedStart < bEnd && effectiveRequestedEnd > bStart) {
-         b.tables.forEach(t => occupiedTableIds.add(t.id));
+        b.tables.forEach((t) => occupiedTableIds.add(t.id));
       }
     }
 
-    return allTables.filter(t => !occupiedTableIds.has(t.id));
+    return allTables.filter((t) => !occupiedTableIds.has(t.id));
   }
 
-  async create(createBookingDto: CreateBookingDto, photoPath?: string): Promise<Booking> {
+  async create(
+    createBookingDto: CreateBookingDto,
+    photoPath?: string,
+  ): Promise<Booking> {
     try {
-      console.log('Creating booking with DTO:', JSON.stringify(createBookingDto));
-      const { customerId, tableIds, menus, branchId, categoryId, totalPax, ...bookingData } = createBookingDto;
-      
-      const customer = await this.customerRepository.findOne({ where: { id: customerId } });
+      console.log(
+        'Creating booking with DTO:',
+        JSON.stringify(createBookingDto),
+      );
+      const {
+        customerId,
+        tableIds,
+        menus,
+        branchId,
+        categoryId,
+        totalPax,
+        ...bookingData
+      } = createBookingDto;
+
+      const customer = await this.customerRepository.findOne({
+        where: { id: customerId },
+      });
       if (!customer) {
         throw new NotFoundException(`Customer with ID ${customerId} not found`);
       }
 
       const effectiveBranchId = branchId ?? 1;
-      const branch = await this.branchRepository.findOne({ where: { id: effectiveBranchId } });
+      const branch = await this.branchRepository.findOne({
+        where: { id: effectiveBranchId },
+      });
       if (!branch) {
-        throw new NotFoundException(`Branch with ID ${effectiveBranchId} not found`);
+        throw new NotFoundException(
+          `Branch with ID ${effectiveBranchId} not found`,
+        );
       }
 
       let category: Category | undefined;
       if (categoryId) {
-        category = await this.categoryRepository.findOne({ where: { id: categoryId } }) || undefined;
+        category =
+          (await this.categoryRepository.findOne({
+            where: { id: categoryId },
+          })) || undefined;
         if (!category) {
-          throw new NotFoundException(`Category with ID ${categoryId} not found`);
+          throw new NotFoundException(
+            `Category with ID ${categoryId} not found`,
+          );
         }
       }
 
@@ -299,10 +359,14 @@ export class BookingService {
       let tables: Table[] = [];
 
       const tenant = await this.tenantService.forMicrosite(1);
-      
+
       // Auto-set expected leave time if not provided
       if (!expectedLeaveTime && tenant.stayDuration) {
-        expectedLeaveTime = this.calculateExpectedLeaveTime(bookingData.date, bookingData.time, tenant.stayDuration);
+        expectedLeaveTime = this.calculateExpectedLeaveTime(
+          bookingData.date,
+          bookingData.time,
+          tenant.stayDuration,
+        );
       }
 
       if (tableIds && tableIds.length > 0) {
@@ -315,61 +379,79 @@ export class BookingService {
         // Auto assign tables based on pax
         // Find available tables
         const allTables = await this.tableRepository.find({
-          where: { 
+          where: {
             branch: { id: effectiveBranchId },
-            ...(category ? { category: { id: category.id } } : {})
+            ...(category ? { category: { id: category.id } } : {}),
           },
-          order: { covers: 'ASC' }
+          order: { covers: 'ASC' },
         });
 
         // Simple check for availability: check if any booking overlaps
-        // Note: This is a simplified availability check. 
+        // Note: This is a simplified availability check.
         // Real-world scenarios need more complex time slot management.
         // We assume 'date' and 'time' + 'stayDuration' defines the slot.
-        
+
         // Find existing bookings for the date to filter out occupied tables
         const existingBookings = await this.bookingRepository.find({
           where: {
             date: bookingData.date,
-            status: In([BookingStatus.CONFIRM, BookingStatus.SEATED, BookingStatus.WAITING_LIST]),
-            branch: { id: effectiveBranchId }
+            status: In([
+              BookingStatus.CONFIRM,
+              BookingStatus.SEATED,
+              BookingStatus.WAITING_LIST,
+            ]),
+            branch: { id: effectiveBranchId },
           },
-          relations: ['tables']
+          relations: ['tables'],
         });
 
-        const requestedStart = this.parseDateTime(bookingData.date, bookingData.time);
-        const requestedEnd = this.parseDateTime(bookingData.date, expectedLeaveTime || bookingData.time); // Fallback if no expectedLeaveTime, effectively 0 duration check? No, let's use tenant duration if calculated.
-        
+        const requestedStart = this.parseDateTime(
+          bookingData.date,
+          bookingData.time,
+        );
+        const requestedEnd = this.parseDateTime(
+          bookingData.date,
+          expectedLeaveTime || bookingData.time,
+        ); // Fallback if no expectedLeaveTime, effectively 0 duration check? No, let's use tenant duration if calculated.
+
         // Re-calculate requested end if we have duration
         let effectiveRequestedEnd = requestedEnd;
         if (tenant.stayDuration) {
-           const endWithDuration = new Date(requestedStart.getTime() + tenant.stayDuration * 60000);
-           effectiveRequestedEnd = endWithDuration;
+          const endWithDuration = new Date(
+            requestedStart.getTime() + tenant.stayDuration * 60000,
+          );
+          effectiveRequestedEnd = endWithDuration;
         }
 
         const occupiedTableIds = new Set<number>();
-        
+
         for (const b of existingBookings) {
           const bStart = this.parseDateTime(b.date, b.time);
-          const bEnd = b.expectedLeaveTime 
+          const bEnd = b.expectedLeaveTime
             ? this.parseDateTime(b.date, b.expectedLeaveTime)
             : new Date(bStart.getTime() + (tenant.stayDuration || 60) * 60000); // Default 60 mins if unknown
 
           // Check overlap
           if (requestedStart < bEnd && effectiveRequestedEnd > bStart) {
-             b.tables.forEach(t => occupiedTableIds.add(t.id));
+            b.tables.forEach((t) => occupiedTableIds.add(t.id));
           }
         }
 
-        const availableTables = allTables.filter(t => !occupiedTableIds.has(t.id));
+        const availableTables = allTables.filter(
+          (t) => !occupiedTableIds.has(t.id),
+        );
 
         if (availableTables.length === 0) {
-          console.log('No tables available for this time slot. Proceeding with empty tables.');
+          console.log(
+            'No tables available for this time slot. Proceeding with empty tables.',
+          );
         } else {
           // Strategy:
           // 1. Try to find a single table with covers >= totalPax (Best Fit)
-          const bestSingleTable = availableTables.find(t => t.covers >= totalPax);
-          
+          const bestSingleTable = availableTables.find(
+            (t) => t.covers >= totalPax,
+          );
+
           if (bestSingleTable) {
             tables = [bestSingleTable];
           } else {
@@ -377,8 +459,8 @@ export class BookingService {
             // User requested "join table ke terdekatnya" (closest).
             // Since we don't have physical coordinates, we assume sequential table numbers imply proximity.
             // We sort by table number to try to pick adjacent tables.
-            const sortedAvailable = [...availableTables].sort((a, b) => 
-              a.number.localeCompare(b.number, undefined, { numeric: true })
+            const sortedAvailable = [...availableTables].sort((a, b) =>
+              a.number.localeCompare(b.number, undefined, { numeric: true }),
             );
 
             let currentPax = 0;
@@ -393,14 +475,23 @@ export class BookingService {
             }
 
             if (currentPax < totalPax) {
-               console.log(`Not enough tables available for ${totalPax} pax (Available capacity: ${currentPax}). Proceeding with empty tables.`);
-               tables = [];
+              console.log(
+                `Not enough tables available for ${totalPax} pax (Available capacity: ${currentPax}). Proceeding with empty tables.`,
+              );
+              tables = [];
             } else {
-               tables = selectedTables;
+              tables = selectedTables;
             }
           }
         }
       }
+
+      const needDpFlag = bookingData.needDp === true;
+      const computedStatusDp = needDpFlag
+        ? photoPath
+          ? 'completed'
+          : 'pending'
+        : undefined;
 
       const booking = this.bookingRepository.create({
         ...bookingData,
@@ -413,6 +504,8 @@ export class BookingService {
         branch,
         bookingCode: this.generateBookingCode(),
         downpaymentProof: photoPath,
+        needDp: needDpFlag,
+        statusDp: computedStatusDp,
       });
       console.log('Booking entity created (not saved):', booking);
 
@@ -432,13 +525,15 @@ export class BookingService {
         } else {
           parsedMenus = menus;
         }
-        
-        const menuIds = parsedMenus.map((m) => m.menuId); 
+
+        const menuIds = parsedMenus.map((m) => m.menuId);
         console.log(menuIds);
-        
-        const existingMenus = await this.menuRepository.findBy({ id: In(menuIds) });
+
+        const existingMenus = await this.menuRepository.findBy({
+          id: In(menuIds),
+        });
         console.log('ini', existingMenus);
-        
+
         if (existingMenus.length !== menuIds.length) {
           throw new NotFoundException('Some menus not found');
         }
@@ -448,14 +543,14 @@ export class BookingService {
           bm.bookingId = savedBooking.id;
           bm.menuId = m.menuId;
           bm.qty = m.qty;
-          bm.menu = existingMenus.find(em => em.id === m.menuId)!;
+          bm.menu = existingMenus.find((em) => em.id === m.menuId)!;
           return bm;
         });
-        
+
         // Save booking menus explicitly
         await this.bookingRepository.manager.save(BookingMenu, bookingMenus);
         console.log('Booking menus saved:', bookingMenus);
-        
+
         savedBooking.bookingMenus = bookingMenus;
       }
       return savedBooking;
@@ -465,7 +560,20 @@ export class BookingService {
     }
   }
 
-  async findAll(page: number, limit: number, filterDto?: GetBookingsFilterDto): Promise<{ items: Booking[]; total: number; page: number; limit: number; closeOuts?: CloseOut[]; totalBooking: number; totalSpent: number; totalPax: number }> {
+  async findAll(
+    page: number,
+    limit: number,
+    filterDto?: GetBookingsFilterDto,
+  ): Promise<{
+    items: Booking[];
+    total: number;
+    page: number;
+    limit: number;
+    closeOuts?: CloseOut[];
+    totalBooking: number;
+    totalSpent: number;
+    totalPax: number;
+  }> {
     const { fromDate, toDate, status } = filterDto || {};
     const where: any = {};
 
@@ -485,7 +593,14 @@ export class BookingService {
       skip: (page - 1) * limit,
       take: limit,
       where,
-      relations: ['customer', 'tables', 'branch', 'bookingMenus', 'bookingMenus.menu', 'category'],
+      relations: [
+        'customer',
+        'tables',
+        'branch',
+        'bookingMenus',
+        'bookingMenus.menu',
+        'category',
+      ],
       order: {
         id: 'DESC',
       },
@@ -493,9 +608,12 @@ export class BookingService {
 
     // Calculate totals
     const queryBuilder = this.bookingRepository.createQueryBuilder('booking');
-    
+
     if (fromDate && toDate) {
-      queryBuilder.andWhere('booking.date BETWEEN :fromDate AND :toDate', { fromDate, toDate });
+      queryBuilder.andWhere('booking.date BETWEEN :fromDate AND :toDate', {
+        fromDate,
+        toDate,
+      });
     } else if (fromDate) {
       queryBuilder.andWhere('booking.date >= :fromDate', { fromDate });
     } else if (toDate) {
@@ -529,8 +647,12 @@ export class BookingService {
         relations: ['categories'],
       });
 
-      const categoryIds = [...new Set(rawCloseOuts.flatMap(c => c.categories.map(cat => cat.id)))];
-      
+      const categoryIds = [
+        ...new Set(
+          rawCloseOuts.flatMap((c) => c.categories.map((cat) => cat.id)),
+        ),
+      ];
+
       let tables: Table[] = [];
       if (categoryIds.length > 0) {
         tables = await this.tableRepository.find({
@@ -541,11 +663,11 @@ export class BookingService {
         });
       }
 
-      closeOuts = rawCloseOuts.map(c => {
-        const currentCategoryIds = c.categories.map(cat => cat.id);
+      closeOuts = rawCloseOuts.map((c) => {
+        const currentCategoryIds = c.categories.map((cat) => cat.id);
         const categoryTables = tables
-          .filter(t => currentCategoryIds.includes(t.category.id))
-          .map(t => t.id);
+          .filter((t) => currentCategoryIds.includes(t.category.id))
+          .map((t) => t.id);
 
         return {
           fromDate: c.fromDate,
@@ -572,7 +694,13 @@ export class BookingService {
   async findOne(id: number): Promise<Booking> {
     const booking = await this.bookingRepository.findOne({
       where: { id },
-      relations: ['customer', 'tables', 'branch', 'bookingMenus', 'bookingMenus.menu'],
+      relations: [
+        'customer',
+        'tables',
+        'branch',
+        'bookingMenus',
+        'bookingMenus.menu',
+      ],
     });
     if (!booking) {
       throw new NotFoundException(`Booking with ID ${id} not found`);
@@ -580,8 +708,22 @@ export class BookingService {
     return booking;
   }
 
-  async update(id: number, updateBookingDto: UpdateBookingDto, photoPath?: string): Promise<Booking> {
-    const { customerId, tableIds, menus, branchId, categoryId, ...bookingData } = updateBookingDto;
+  async update(
+    id: number,
+    updateBookingDto: UpdateBookingDto,
+    photoPath?: string,
+  ): Promise<Booking> {
+    const {
+      customerId,
+      tableIds,
+      menus,
+      branchId,
+      categoryId,
+      ...bookingData
+    } = updateBookingDto;
+    const currentBooking = await this.bookingRepository.findOne({
+      where: { id },
+    });
 
     const updatePayload: Partial<Booking> & { id: number } = {
       id,
@@ -589,14 +731,19 @@ export class BookingService {
     };
 
     if (categoryId) {
-      const category = await this.categoryRepository.findOne({ where: { id: categoryId } });
+      const category = await this.categoryRepository.findOne({
+        where: { id: categoryId },
+      });
       if (!category) {
         throw new NotFoundException(`Category with ID ${categoryId} not found`);
       }
       updatePayload.category = category;
     }
 
-    if (bookingData.status === BookingStatus.CONFIRM || bookingData.status === BookingStatus.SEATED) {
+    if (
+      bookingData.status === BookingStatus.CONFIRM ||
+      bookingData.status === BookingStatus.SEATED
+    ) {
       try {
         const tenant = await this.tenantService.forMicrosite(1);
         if (tenant.stayDuration) {
@@ -635,7 +782,9 @@ export class BookingService {
           );
 
           if (!isNaN(bookingDateTime.getTime())) {
-            const expectedLeaveDate = new Date(bookingDateTime.getTime() + tenant.stayDuration * 60000);
+            const expectedLeaveDate = new Date(
+              bookingDateTime.getTime() + tenant.stayDuration * 60000,
+            );
             const leaveHours = expectedLeaveDate.getHours();
             const leaveMinutes = expectedLeaveDate.getMinutes();
             const hoursStr = String(leaveHours).padStart(2, '0');
@@ -647,13 +796,15 @@ export class BookingService {
         console.error('Error calculating expected leave time:', error);
       }
     } else if (bookingData.status === BookingStatus.COMPLETED) {
-      const existingBooking = await this.bookingRepository.findOne({ where: { id } });
+      const existingBooking = await this.bookingRepository.findOne({
+        where: { id },
+      });
       if (existingBooking && !existingBooking.leaveTime) {
         // Use UTC+7 for leaveTime
         const now = new Date();
-        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-        const wibTime = new Date(utc + (7 * 3600000));
-        
+        const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+        const wibTime = new Date(utc + 7 * 3600000);
+
         const hours = wibTime.getHours();
         const minutes = wibTime.getMinutes();
         const hoursStr = String(hours).padStart(2, '0');
@@ -667,14 +818,19 @@ export class BookingService {
     }
 
     if (customerId) {
-      const customer = await this.customerRepository.findOne({ where: { id: customerId } });
-      if (!customer) throw new NotFoundException(`Customer with ID ${customerId} not found`);
+      const customer = await this.customerRepository.findOne({
+        where: { id: customerId },
+      });
+      if (!customer)
+        throw new NotFoundException(`Customer with ID ${customerId} not found`);
       updatePayload.customer = customer;
     }
 
     if (tableIds && tableIds.length > 0) {
       const uniqueTableIds = Array.from(new Set(tableIds));
-      const tables = await this.tableRepository.findBy({ id: In(uniqueTableIds) });
+      const tables = await this.tableRepository.findBy({
+        id: In(uniqueTableIds),
+      });
       if (tables.length !== uniqueTableIds.length) {
         throw new NotFoundException('Some tables not found');
       }
@@ -683,9 +839,13 @@ export class BookingService {
 
     if (branchId !== undefined) {
       const effectiveBranchId = branchId ?? 1;
-      const branch = await this.branchRepository.findOne({ where: { id: effectiveBranchId } });
+      const branch = await this.branchRepository.findOne({
+        where: { id: effectiveBranchId },
+      });
       if (!branch) {
-        throw new NotFoundException(`Branch with ID ${effectiveBranchId} not found`);
+        throw new NotFoundException(
+          `Branch with ID ${effectiveBranchId} not found`,
+        );
       }
       (updatePayload as any).branch = branch;
     }
@@ -704,13 +864,17 @@ export class BookingService {
       }
 
       const menuIds = parsedMenus.map((m) => m.menuId);
-      const existingMenus = await this.menuRepository.findBy({ id: In(menuIds) });
+      const existingMenus = await this.menuRepository.findBy({
+        id: In(menuIds),
+      });
       if (existingMenus.length !== menuIds.length) {
         throw new NotFoundException('Some menus not found');
       }
 
       // Delete existing menus
-      await this.bookingRepository.manager.delete(BookingMenu, { bookingId: id });
+      await this.bookingRepository.manager.delete(BookingMenu, {
+        bookingId: id,
+      });
 
       // Create new menus
       const bookingMenus = parsedMenus.map((m) => {
@@ -718,15 +882,31 @@ export class BookingService {
         bm.bookingId = id;
         bm.menuId = m.menuId;
         bm.qty = m.qty;
-        bm.menu = existingMenus.find(em => em.id === m.menuId)!;
+        bm.menu = existingMenus.find((em) => em.id === m.menuId)!;
         return bm;
       });
 
       await this.bookingRepository.manager.save(BookingMenu, bookingMenus);
     }
 
+    if (typeof bookingData.needDp === 'boolean') {
+      (updatePayload as any).needDp = bookingData.needDp;
+      if (
+        bookingData.needDp &&
+        (!currentBooking || currentBooking.statusDp !== 'completed')
+      ) {
+        (updatePayload as any).statusDp = 'pending';
+      }
+    }
+
     if (photoPath) {
       updatePayload.downpaymentProof = photoPath;
+      if (
+        (typeof bookingData.needDp === 'boolean' && bookingData.needDp) ||
+        currentBooking?.needDp
+      ) {
+        (updatePayload as any).statusDp = 'completed';
+      }
     }
 
     await this.bookingRepository.save(updatePayload);
@@ -737,6 +917,4 @@ export class BookingService {
     const booking = await this.findOne(id);
     await this.bookingRepository.softRemove(booking);
   }
-
-
 }

@@ -19,11 +19,14 @@ export class MicrositeService {
     private readonly menuCategoryService: MenuCategoryService,
   ) {}
 
-  async createBooking(createMicrositeBookingDto: CreateMicrositeBookingDto, photoPath?: string) {
+  async createBooking(
+    createMicrositeBookingDto: CreateMicrositeBookingDto,
+    photoPath?: string,
+  ) {
     // Look up existing customer by phone or instagram
     const existingCustomer = await this.customerService.findByPhoneOrInstagram(
       createMicrositeBookingDto.customerPhone,
-      createMicrositeBookingDto.customerInstagram
+      createMicrositeBookingDto.customerInstagram,
     );
 
     let customerId: number;

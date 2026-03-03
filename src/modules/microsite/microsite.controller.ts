@@ -1,6 +1,22 @@
-import { Controller, Get, Post, Body, UseGuards, UploadedFile, UseInterceptors, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  UploadedFile,
+  UseInterceptors,
+  Query,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiHeader, ApiOperation, ApiConsumes, ApiBody, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiHeader,
+  ApiOperation,
+  ApiConsumes,
+  ApiBody,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { MicrositeService } from './microsite.service';
 import { CreateMicrositeBookingDto } from './dto/create-microsite-booking.dto';
 import { PublicApiKeyGuard } from '../../common/guards/public-api-key.guard';
@@ -55,15 +71,33 @@ export class MicrositeController {
   }
 
   @Get('available-time-slots')
-  @ApiQuery({ name: 'date', required: true, type: String, description: 'YYYY-MM-DD' })
+  @ApiQuery({
+    name: 'date',
+    required: true,
+    type: String,
+    description: 'YYYY-MM-DD',
+  })
   getAvailableTimeSlots(@Query('date') date: string) {
     return this.micrositeService.getAvailableTimeSlots(date);
   }
 
   @Get('available-table-categories')
-  @ApiQuery({ name: 'date', required: true, type: String, description: 'YYYY-MM-DD' })
-  @ApiQuery({ name: 'time', required: true, type: String, description: 'HH:mm' })
-  getAvailableTableCategories(@Query('date') date: string, @Query('time') time: string) {
+  @ApiQuery({
+    name: 'date',
+    required: true,
+    type: String,
+    description: 'YYYY-MM-DD',
+  })
+  @ApiQuery({
+    name: 'time',
+    required: true,
+    type: String,
+    description: 'HH:mm',
+  })
+  getAvailableTableCategories(
+    @Query('date') date: string,
+    @Query('time') time: string,
+  ) {
     return this.micrositeService.getAvailableTableCategories(date, time);
   }
 }

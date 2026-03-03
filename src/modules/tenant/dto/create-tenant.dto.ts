@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsOptional, IsString, IsEmail, IsUrl } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsEmail,
+  IsUrl,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateTenantDto {
@@ -99,4 +105,31 @@ export class CreateTenantDto {
   @ApiPropertyOptional({ example: 90, description: 'Stay duration in minutes' })
   @IsOptional()
   stayDuration?: number;
+
+  @ApiPropertyOptional({ example: 'Syarat dan ketentuan reservasi...' })
+  @IsOptional()
+  @IsString()
+  termsNConditions?: string;
+
+  @ApiPropertyOptional({ example: 'BCA' })
+  @IsOptional()
+  @IsString()
+  bankType?: string;
+
+  @ApiPropertyOptional({ example: 'Bank Central Asia' })
+  @IsOptional()
+  @IsString()
+  bankName?: string;
+
+  @ApiPropertyOptional({ example: 2 })
+  @IsOptional()
+  minimumPax?: number;
+
+  @ApiPropertyOptional({ example: 100000 })
+  @IsOptional()
+  minimumDP?: number;
+
+  @ApiPropertyOptional({ example: 50 })
+  @IsOptional()
+  minimumPercentage?: number;
 }

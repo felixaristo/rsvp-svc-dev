@@ -1,4 +1,16 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToOne, OneToMany, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  ManyToMany,
+  JoinTable,
+} from 'typeorm';
 import { Customer } from '../../customer/entities/customer.entity';
 import { Table } from '../../table-management/entities/table.entity';
 import { BookingMenu } from './booking-menu.entity';
@@ -38,7 +50,11 @@ export class Booking {
   @Column({ type: 'text', nullable: true })
   note: string;
 
-  @Column({ name: 'downpayment_proof', nullable: true, transformer: new FileUrlTransformer() })
+  @Column({
+    name: 'downpayment_proof',
+    nullable: true,
+    transformer: new FileUrlTransformer(),
+  })
   downpaymentProof: string;
 
   @Column({ name: 'spend_money', type: 'decimal', nullable: true })
@@ -47,11 +63,25 @@ export class Booking {
   @Column({ name: 'expected_leave_time', type: 'varchar', nullable: true })
   expectedLeaveTime: string;
 
-   @Column({ type: 'varchar', length: 50, nullable: true })
-   channel: string;
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  channel: string;
 
   @Column({ name: 'leave_time', type: 'varchar', nullable: true })
   leaveTime: string;
+
+  @Column({ name: 'need_dp', type: 'boolean', default: false })
+  needDp: boolean;
+
+  @Column({ name: 'status_dp', type: 'varchar', length: 20, nullable: true })
+  statusDp: string;
+
+  @Column({
+    name: 'reference_number',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
+  referenceNumber: string;
 
   @ManyToMany(() => Table)
   @JoinTable({
@@ -69,7 +99,9 @@ export class Booking {
   @JoinColumn({ name: 'category_id' })
   category: Category;
 
-  @OneToMany(() => BookingMenu, (bookingMenu) => bookingMenu.booking, { cascade: true })
+  @OneToMany(() => BookingMenu, (bookingMenu) => bookingMenu.booking, {
+    cascade: true,
+  })
   bookingMenus: BookingMenu[];
 
   @Column({

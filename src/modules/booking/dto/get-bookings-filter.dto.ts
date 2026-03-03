@@ -13,7 +13,10 @@ export class GetBookingsFilterDto {
   @IsDateString()
   toDate?: string;
 
-  @ApiPropertyOptional({ enum: BookingStatus, description: 'Filter by booking status' })
+  @ApiPropertyOptional({
+    enum: BookingStatus,
+    description: 'Filter by booking status',
+  })
   @IsOptional()
   @IsEnum(BookingStatus)
   status?: BookingStatus;

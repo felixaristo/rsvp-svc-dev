@@ -1,9 +1,25 @@
-import { IsNotEmpty, IsOptional, IsString, IsNumber, IsEmail, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsEmail,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
-import { CreateBookingDto, CreateBookingMenuItemDto } from '../../booking/dto/create-booking.dto';
+import {
+  CreateBookingDto,
+  CreateBookingMenuItemDto,
+} from '../../booking/dto/create-booking.dto';
 import { Transform, Type } from 'class-transformer';
 
-export class CreateMicrositeBookingDto extends OmitType(CreateBookingDto, ['customerId', 'tableIds', 'downpaymentProof', 'menus'] as const) {
+export class CreateMicrositeBookingDto extends OmitType(CreateBookingDto, [
+  'customerId',
+  'tableIds',
+  'downpaymentProof',
+  'menus',
+] as const) {
   @ApiPropertyOptional({ type: [CreateBookingMenuItemDto] })
   @IsOptional()
   @IsArray()

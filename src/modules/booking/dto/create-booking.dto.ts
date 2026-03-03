@@ -1,4 +1,12 @@
-import { IsNotEmpty, IsOptional, IsString, IsNumber, IsEnum, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsEnum,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BookingStatus } from '../entities/booking.entity';
 import { Transform, Type } from 'class-transformer';
@@ -60,17 +68,13 @@ export class CreateBookingDto {
   @IsArray()
   @Transform(({ value }) => {
     if (Array.isArray(value)) {
-      return value
-        .map((v) => parseInt(v, 10))
-        .filter((v) => !isNaN(v));
+      return value.map((v) => parseInt(v, 10)).filter((v) => !isNaN(v));
     }
     if (typeof value === 'string') {
       try {
         const parsed = JSON.parse(value);
         if (Array.isArray(parsed)) {
-          return parsed
-            .map((v) => parseInt(v, 10))
-            .filter((v) => !isNaN(v));
+          return parsed.map((v) => parseInt(v, 10)).filter((v) => !isNaN(v));
         }
         if (typeof parsed === 'number' && !isNaN(parsed)) {
           return [parsed];
@@ -95,13 +99,13 @@ export class CreateBookingDto {
 
   @ApiPropertyOptional({ example: 1 })
   @IsOptional()
-  @Transform(({ value }) => value ? parseInt(value) : undefined)
+  @Transform(({ value }) => (value ? parseInt(value) : undefined))
   @IsNumber()
   branchId?: number;
 
   @ApiPropertyOptional({ example: 1, description: 'Table Category ID' })
   @IsOptional()
-  @Transform(({ value }) => value ? parseInt(value) : undefined)
+  @Transform(({ value }) => (value ? parseInt(value) : undefined))
   @IsNumber()
   categoryId?: number;
 
@@ -109,7 +113,10 @@ export class CreateBookingDto {
   @IsOptional()
   menus?: any;
 
-  @ApiPropertyOptional({ enum: BookingStatus, default: BookingStatus.WAITING_LIST })
+  @ApiPropertyOptional({
+    enum: BookingStatus,
+    default: BookingStatus.WAITING_LIST,
+  })
   @IsOptional()
   @IsEnum(BookingStatus)
   status?: BookingStatus;
@@ -120,7 +127,47 @@ export class CreateBookingDto {
 
   @ApiPropertyOptional({ example: 100000 })
   @IsOptional()
-  @Transform(({ value }) => value ? parseFloat(value) : undefined)
+  @Transform(({ value }) => (value ? parseFloat(value) : undefined))
   @IsNumber()
   spendMoney?: number;
+
+  @ApiPropertyOptional({ example: true, description: 'Apakah membutuhkan DP' })
+  @IsOptional()
+  @Transform(({ value, obj }) => {
+    if (typeof value === 'boolean') return value;
+    if (
+      value === undefined &&
+      obj &&
+      Object.prototype.hasOwnProperty.call(obj, 'need_dp')
+    ) {
+      const v = obj['need_dp'];
+      if (typeof v === 'boolean') return v;
+      if (typeof v === 'string')
+        return ['true', '1', 'yes', 'on'].includes(v.toLowerCase());
+      if (typeof v === 'number') return v === 1;
+    }
+    if (typeof value === 'string') {
+      return ['true', '1', 'yes', 'on'].includes(value.toLowerCase());
+    }
+    if (typeof value === 'number') return value === 1;
+    return undefined;
+  })
+  needDp?: boolean;
+
+  @ApiPropertyOptional({ example: 'REF-123456' })
+  @IsOptional()
+  @Transform(({ value, obj }) => {
+    if (typeof value === 'string') return value;
+    if (
+      value === undefined &&
+      obj &&
+      Object.prototype.hasOwnProperty.call(obj, 'reference_number')
+    ) {
+      const v = obj['reference_number'];
+      if (typeof v === 'string') return v;
+    }
+    return undefined;
+  })
+  @IsString()
+  referenceNumber?: string;
 }

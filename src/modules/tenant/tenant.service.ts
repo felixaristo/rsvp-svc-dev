@@ -12,7 +12,10 @@ export class TenantService {
     private readonly tenantRepository: Repository<Tenant>,
   ) {}
 
-  async create(createTenantDto: CreateTenantDto, logoPath?: string): Promise<Tenant> {
+  async create(
+    createTenantDto: CreateTenantDto,
+    logoPath?: string,
+  ): Promise<Tenant> {
     const tenant = this.tenantRepository.create({
       ...createTenantDto,
       logo: logoPath,
@@ -20,7 +23,10 @@ export class TenantService {
     return await this.tenantRepository.save(tenant);
   }
 
-  async findAll(page: number, limit: number): Promise<{ data: Tenant[]; total: number; page: number; limit: number }> {
+  async findAll(
+    page: number,
+    limit: number,
+  ): Promise<{ data: Tenant[]; total: number; page: number; limit: number }> {
     const [data, total] = await this.tenantRepository.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
@@ -59,7 +65,31 @@ export class TenantService {
   async forMicrosite(id: number): Promise<Tenant> {
     const tenant = await this.tenantRepository.findOne({
       where: { id },
-      select: ['id', 'primaryColor', 'secondaryColor', 'buttonHoverColor', 'logo', 'name', 'description', 'address', 'phone', 'email', 'website', 'layout', 'openHours', 'closedHours', 'status', 'stayDuration', 'accountNumber'],
+      select: [
+        'id',
+        'primaryColor',
+        'secondaryColor',
+        'buttonHoverColor',
+        'logo',
+        'name',
+        'description',
+        'address',
+        'phone',
+        'email',
+        'website',
+        'layout',
+        'openHours',
+        'closedHours',
+        'status',
+        'stayDuration',
+        'accountNumber',
+        'termsNConditions',
+        'bankType',
+        'bankName',
+        'minimumPax',
+        'minimumDP',
+        'minimumPercentage',
+      ],
     });
     if (!tenant) {
       throw new NotFoundException(`Tenant with ID ${id} not found`);
@@ -67,7 +97,11 @@ export class TenantService {
     return tenant;
   }
 
-  async update(id: number, updateTenantDto: UpdateTenantDto, logoPath?: string): Promise<Tenant> {
+  async update(
+    id: number,
+    updateTenantDto: UpdateTenantDto,
+    logoPath?: string,
+  ): Promise<Tenant> {
     const tenant = await this.findOne(id);
     const updatedTenant = {
       ...tenant,
