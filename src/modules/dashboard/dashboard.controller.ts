@@ -18,7 +18,6 @@ export class DashboardController {
   }
 
   @Get('bookings-by-time')
-  @ApiOperation({ summary: 'Get total bookings by time category for a date' })
   getBookingsByTime(@Query() query: GetDashboardBookingsByTimeDto) {
     return this.dashboardService.getBookingsByTime(query.fromDate, query.toDate);
   }

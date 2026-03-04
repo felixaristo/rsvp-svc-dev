@@ -15,10 +15,7 @@ export class AuthService {
   async validateUser(username: string, pass: string, captchaToken: string): Promise<any> {
     const user = await this.usersService.findOne(username);
     if(captchaToken !== process.env.captchaTokenByPass) {
-      console.log('inii');
-      // // check to cloudflare captcha
-      // // throw new UnauthorizedException();
-      const cfUrl = `https://challenges.cloudflare.com/turnstile/v0/siteverify`;
+      const cfUrl = process.env.cloudFlareURL || '';
       const response = await fetch(
         cfUrl,
         {
@@ -32,13 +29,11 @@ export class AuthService {
           }),
         },
       );
-      // console.log(data);
       const result = await response.json();
       console.log(result);
-      
-      // if (!mediaResponse.data || !mediaResponse.data.id) {
-      //   throw new Error('Failed to create media container');
-      // }
+      if (!result.success) {
+        throw new UnauthorizedException();
+      }
     }
 
     if (user && !user.deletedAt && await bcrypt.compare(pass, user.password)) {
