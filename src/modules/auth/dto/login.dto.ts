@@ -11,6 +11,11 @@ export class LoginDto {
   @IsString()
   @IsNotEmpty()
   password: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  captchaToken: string;
 }
 
 export class RefreshTokenDto {

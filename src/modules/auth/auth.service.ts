@@ -3,6 +3,7 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as fs from 'fs';
+import axios from 'axios';
 
 @Injectable()
 export class AuthService {
@@ -11,8 +12,35 @@ export class AuthService {
     private jwtService: JwtService
   ) {}
 
-  async validateUser(username: string, pass: string): Promise<any> {
+  async validateUser(username: string, pass: string, captchaToken: string): Promise<any> {
     const user = await this.usersService.findOne(username);
+    if(captchaToken !== process.env.captchaTokenByPass) {
+      console.log('inii');
+      // // check to cloudflare captcha
+      // // throw new UnauthorizedException();
+      const cfUrl = `https://challenges.cloudflare.com/turnstile/v0/siteverify`;
+      const response = await fetch(
+        cfUrl,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            secret: process.env.secretKeyCF || '',
+            response: captchaToken
+          }),
+        },
+      );
+      // console.log(data);
+      const result = await response.json();
+      console.log(result);
+      
+      // if (!mediaResponse.data || !mediaResponse.data.id) {
+      //   throw new Error('Failed to create media container');
+      // }
+    }
+
     if (user && !user.deletedAt && await bcrypt.compare(pass, user.password)) {
       const { password, ...result } = user;
       return result;
