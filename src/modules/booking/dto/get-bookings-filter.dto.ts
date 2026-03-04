@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsEnum, IsDateString } from 'class-validator';
-import { BookingStatus } from '../entities/booking.entity';
+import { BookingStatus, BookingStatusDp } from '../entities/booking.entity';
 
 export class GetBookingsFilterDto {
   @ApiPropertyOptional({ description: 'Filter by start date (YYYY-MM-DD)' })
@@ -20,4 +20,12 @@ export class GetBookingsFilterDto {
   @IsOptional()
   @IsEnum(BookingStatus)
   status?: BookingStatus;
+
+  @ApiPropertyOptional({
+    enum: BookingStatusDp,
+    description: 'Filter by DP status',
+  })
+  @IsOptional()
+  @IsEnum(BookingStatusDp)
+  statusDp?: BookingStatusDp;
 }

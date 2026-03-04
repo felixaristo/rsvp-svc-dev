@@ -20,6 +20,12 @@ export class CreateMicrositeBookingDto extends OmitType(CreateBookingDto, [
   'downpaymentProof',
   'menus',
 ] as const) {
+  @ApiProperty({ example: 500000, description: 'Total Downpayment' })
+  @IsOptional()
+  @Transform(({ value }) => parseFloat(value))
+  @IsNumber()
+  totalDp?: number;
+
   @ApiPropertyOptional({ type: [CreateBookingMenuItemDto] })
   @IsOptional()
   @IsArray()

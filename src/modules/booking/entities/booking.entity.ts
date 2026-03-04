@@ -26,6 +26,11 @@ export enum BookingStatus {
   CANCELLED = 'cancelled',
 }
 
+export enum BookingStatusDp {
+  PENDING = 'pending',
+  COMPLETED = 'completed'
+}
+
 @Entity('booking')
 export class Booking {
   @PrimaryGeneratedColumn()
@@ -74,6 +79,9 @@ export class Booking {
 
   @Column({ name: 'status_dp', type: 'varchar', length: 20, nullable: true })
   statusDp: string;
+
+  @Column({ name: 'total_dp', type: 'decimal', nullable: true })
+  totalDp: number;
 
   @Column({
     name: 'reference_number',

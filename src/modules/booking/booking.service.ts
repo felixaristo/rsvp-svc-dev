@@ -7,8 +7,11 @@ import {
   MoreThanOrEqual,
   LessThanOrEqual,
   FindOptionsWhere,
+  Like,
+  Brackets,
+  IsNull,
 } from 'typeorm';
-import { Booking, BookingStatus } from './entities/booking.entity';
+import { Booking, BookingStatus, BookingStatusDp } from './entities/booking.entity';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 import { GetBookingsFilterDto } from './dto/get-bookings-filter.dto';
@@ -20,6 +23,7 @@ import { TenantService } from '../tenant/tenant.service';
 import { Branch } from '../branch/entities/branch.entity';
 import { CloseOut } from '../close-out/entities/close-out.entity';
 import { Category } from '../table-categories/entities/category.entity';
+import { isNotEmpty } from 'class-validator';
 
 @Injectable()
 export class BookingService {
@@ -486,11 +490,8 @@ export class BookingService {
         }
       }
 
-      // Determine needDp based on tenant settings (minimumPax)
-      let needDpFlag = false;
-      if (tenant.minimumPax && totalPax >= tenant.minimumPax) {
-        needDpFlag = true;
-      }
+      // Determine needDp based on payload
+      const needDpFlag = bookingData.needDp || false;
 
       const computedStatusDp = needDpFlag
         ? photoPath
@@ -569,6 +570,7 @@ export class BookingService {
     page: number,
     limit: number,
     filterDto?: GetBookingsFilterDto,
+    search?: string,
   ): Promise<{
     items: Booking[];
     total: number;
@@ -579,19 +581,38 @@ export class BookingService {
     totalSpent: number;
     totalPax: number;
   }> {
-    const { fromDate, toDate, status } = filterDto || {};
-    const where: any = {};
+    const { fromDate, toDate, status, statusDp } = filterDto || {};
+    const baseWhere: any = {};
 
     if (fromDate && toDate) {
-      where.date = Between(fromDate, toDate);
+      baseWhere.date = Between(fromDate, toDate);
     } else if (fromDate) {
-      where.date = MoreThanOrEqual(fromDate);
+      baseWhere.date = MoreThanOrEqual(fromDate);
     } else if (toDate) {
-      where.date = LessThanOrEqual(toDate);
+      baseWhere.date = LessThanOrEqual(toDate);
     }
 
     if (status) {
-      where.status = status;
+      baseWhere.status = status;
+    }
+
+    if (statusDp) {
+      if (statusDp === BookingStatusDp.PENDING) {
+        baseWhere.needDp = true;
+        baseWhere.downpaymentProof = IsNull();
+      } else if (statusDp === BookingStatusDp.COMPLETED) {
+        baseWhere.needDp = true;
+        baseWhere.downpaymentProof = !IsNull();
+      }
+    }
+
+    let where: any = baseWhere;
+
+    if (search) {
+      where = [
+        { ...baseWhere, bookingCode: Like(`%${search}%`) },
+        { ...baseWhere, customer: { fullname: Like(`%${search}%`) } },
+      ];
     }
 
     const [items, total] = await this.bookingRepository.findAndCount({
@@ -614,6 +635,19 @@ export class BookingService {
     // Calculate totals
     const queryBuilder = this.bookingRepository.createQueryBuilder('booking');
 
+    if (search) {
+      queryBuilder.leftJoin('booking.customer', 'customer');
+      queryBuilder.andWhere(
+        new Brackets((qb) => {
+          qb.where('booking.bookingCode LIKE :search', {
+            search: `%${search}%`,
+          }).orWhere('customer.fullname LIKE :search', {
+            search: `%${search}%`,
+          });
+        }),
+      );
+    }
+
     if (fromDate && toDate) {
       queryBuilder.andWhere('booking.date BETWEEN :fromDate AND :toDate', {
         fromDate,
@@ -627,6 +661,16 @@ export class BookingService {
 
     if (status) {
       queryBuilder.andWhere('booking.status = :status', { status });
+    }
+
+    if (statusDp) {
+      if (statusDp === BookingStatusDp.PENDING) {
+        queryBuilder.andWhere('booking.needDp = :needDp', { needDp: true });
+        queryBuilder.andWhere('booking.downpaymentProof IS NULL');
+      } else if (statusDp === BookingStatusDp.COMPLETED) {
+        queryBuilder.andWhere('booking.needDp = :needDp', { needDp: true });
+        queryBuilder.andWhere('booking.downpaymentProof IS NOT NULL');
+      }
     }
 
     const { totalSpent, totalPax } = await queryBuilder

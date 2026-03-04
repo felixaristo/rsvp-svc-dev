@@ -6,6 +6,7 @@ import {
   IsEnum,
   IsArray,
   ValidateNested,
+  IsBoolean,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BookingStatus } from '../entities/booking.entity';
@@ -57,6 +58,12 @@ export class CreateBookingDto {
   @IsOptional()
   @IsString()
   channel?: string;
+
+  @ApiPropertyOptional({ example: 500000 })
+  @IsOptional()
+  @Transform(({ value }) => parseFloat(value))
+  @IsNumber()
+  totalDp?: number;
 
   @ApiPropertyOptional({ example: '21:30' })
   @IsOptional()
@@ -148,4 +155,14 @@ export class CreateBookingDto {
   })
   @IsString()
   referenceNumber?: string;
+
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  })
+  @IsBoolean()
+  needDp?: boolean;
 }

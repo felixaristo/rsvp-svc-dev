@@ -8,6 +8,7 @@ import {
   UseInterceptors,
   Query,
   Param,
+  Patch,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -107,5 +108,11 @@ export class MicrositeController {
   @KeepNulls()
   getBookingByCode(@Param('code') code: string) {
     return this.micrositeService.findBookingByCode(code);
+  }
+
+  @Patch('bookings/:code/cancel')
+  @ApiOperation({ summary: 'Cancel booking by booking code' })
+  cancelBooking(@Param('code') code: string) {
+    return this.micrositeService.cancelBooking(code);
   }
 }

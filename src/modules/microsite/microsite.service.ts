@@ -7,6 +7,7 @@ import { MenuService } from '../menu-management/menu.service';
 import { MenuCategoryService } from '../menu-categories/menu-category.service';
 import { CreateMicrositeBookingDto } from './dto/create-microsite-booking.dto';
 import { CreateBookingDto } from '../booking/dto/create-booking.dto';
+import { BookingStatus } from '../booking/entities/booking.entity';
 
 @Injectable()
 export class MicrositeService {
@@ -81,5 +82,12 @@ export class MicrositeService {
 
   async findBookingByCode(code: string) {
     return this.bookingService.findOne(code);
+  }
+
+  async cancelBooking(code: string) {
+    const booking = await this.bookingService.findOne(code);
+    return this.bookingService.update(booking.id, {
+      status: BookingStatus.CANCELLED,
+    });
   }
 }
