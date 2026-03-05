@@ -11,6 +11,7 @@ import {
   Brackets,
   IsNull,
   Not,
+  ILike,
 } from 'typeorm';
 import { Booking, BookingStatus, BookingStatusDp } from './entities/booking.entity';
 import { CreateBookingDto } from './dto/create-booking.dto';
@@ -611,8 +612,8 @@ export class BookingService {
 
     if (search) {
       where = [
-        { ...baseWhere, bookingCode: Like(`%${search}%`) },
-        { ...baseWhere, customer: { fullname: Like(`%${search}%`) } },
+        { ...baseWhere, bookingCode: ILike(`%${search}%`) },
+        { ...baseWhere, customer: { fullname: ILike(`%${search}%`) } },
       ];
     }
 
@@ -640,9 +641,9 @@ export class BookingService {
       queryBuilder.leftJoin('booking.customer', 'customer');
       queryBuilder.andWhere(
         new Brackets((qb) => {
-          qb.where('booking.bookingCode LIKE :search', {
+          qb.where('booking.bookingCode ILIKE :search', {
             search: `%${search}%`,
-          }).orWhere('customer.fullname LIKE :search', {
+          }).orWhere('customer.fullname ILIKE :search', {
             search: `%${search}%`,
           });
         }),

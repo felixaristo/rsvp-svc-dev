@@ -145,12 +145,12 @@ export class BookingController {
   @Get(':page/:limit')
   @ApiParam({ name: 'page', required: true, type: Number })
   @ApiParam({ name: 'limit', required: true, type: Number })
-  @ApiParam({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'search', required: false, type: String })
   findAll(
     @Param('page', ParseIntPipe) page: number,
     @Param('limit', ParseIntPipe) limit: number,
     @Query() filterDto: GetBookingsFilterDto,
-    @Param('search') search?: string,
+    @Query('search') search?: string,
   ) {
     return this.bookingService.findAll(page, limit, filterDto, search);
   }
