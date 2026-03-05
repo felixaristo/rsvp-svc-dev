@@ -10,6 +10,7 @@ import {
   Like,
   Brackets,
   IsNull,
+  Not,
 } from 'typeorm';
 import { Booking, BookingStatus, BookingStatusDp } from './entities/booking.entity';
 import { CreateBookingDto } from './dto/create-booking.dto';
@@ -602,7 +603,7 @@ export class BookingService {
         baseWhere.downpaymentProof = IsNull();
       } else if (statusDp === BookingStatusDp.COMPLETED) {
         baseWhere.needDp = true;
-        baseWhere.downpaymentProof = !IsNull();
+        baseWhere.downpaymentProof = Not(IsNull());
       }
     }
 

@@ -46,29 +46,67 @@ export class DashboardService {
   async getBookingsByTime(fromDate: string, toDate: string) {
     const bookings = await this.bookingRepository.find({
       where: { date: Between(fromDate, toDate) },
-      select: ['id', 'time'],
+      select: ['id', 'date', 'time'],
     });
 
-    const totals = {
-      morning: 0,
-      afternoon: 0,
-      evening: 0,
-      night: 0,
-    };
+    const byDate: Record<
+      string,
+      { morning: number; afternoon: number; evening: number; night: number }
+    > = {};
 
     for (const b of bookings) {
+      const key = b.date;
+      if (!byDate[key]) {
+        byDate[key] = { morning: 0, afternoon: 0, evening: 0, night: 0 };
+      }
       const minutes = this.timeToMinutes(b.time);
       if (minutes === null) continue;
 
-      if (minutes >= 6 * 60 && minutes <= 10 * 60 + 59) totals.morning += 1;
+      if (minutes >= 6 * 60 && minutes <= 10 * 60 + 59) byDate[key].morning += 1;
       else if (minutes >= 11 * 60 && minutes <= 14 * 60 + 59)
-        totals.afternoon += 1;
+        byDate[key].afternoon += 1;
       else if (minutes >= 15 * 60 && minutes <= 17 * 60 + 59)
-        totals.evening += 1;
-      else if (minutes >= 18 * 60 && minutes <= 23 * 60) totals.night += 1;
+        byDate[key].evening += 1;
+      else if (minutes >= 18 * 60 && minutes <= 23 * 60 + 59)
+        byDate[key].night += 1;
     }
 
-    return { fromDate, toDate, ...totals };
+    // Ensure we return an entry for each date in the range, even if zero
+    const result: Array<{
+      date: string;
+      morning: number;
+      afternoon: number;
+      evening: number;
+      night: number;
+    }> = [];
+
+    const start = new Date(fromDate);
+    const end = new Date(toDate);
+    for (
+      let d = new Date(start.getTime());
+      d.getTime() <= end.getTime();
+      d.setDate(d.getDate() + 1)
+    ) {
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+      const counters = byDate[dateStr] || {
+        morning: 0,
+        afternoon: 0,
+        evening: 0,
+        night: 0,
+      };
+      result.push({
+        date: dateStr,
+        morning: counters.morning,
+        afternoon: counters.afternoon,
+        evening: counters.evening,
+        night: counters.night,
+      });
+    }
+
+    return result;
   }
 
   async getSummary(filterDto: GetDashboardSummaryDto) {
