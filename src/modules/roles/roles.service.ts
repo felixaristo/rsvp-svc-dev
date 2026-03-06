@@ -15,6 +15,7 @@ export class RolesService {
 
   async create(dto: CreateRoleUserDto): Promise<User> {
     const hashed = await bcrypt.hash(dto.password, 10);
+    dto.branchId = dto.branchId ?? 1;
     const entity = this.repo.create({ username: dto.username, fullname: dto.fullname, password: hashed, role: dto.role, branch: { id: dto.branchId } });
     return this.repo.save(entity);
   }
@@ -37,6 +38,7 @@ export class RolesService {
     if (dto.username !== undefined) entity.username = dto.username;
     if (dto.fullname !== undefined) entity.fullname = dto.fullname;
     if (dto.role !== undefined) entity.role = dto.role;
+    dto.branchId = dto.branchId ?? 1;
     if (dto.password !== undefined) {
       entity.password = await bcrypt.hash(dto.password, 10);
     }

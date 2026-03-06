@@ -15,6 +15,8 @@ export class RolesController {
   @Post()
   @ApiBody({ type: CreateRoleUserDto })
   create(@Body() dto: CreateRoleUserDto) {
+    console.log(dto);
+    
     return this.service.create(dto);
   }
 

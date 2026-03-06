@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsString, IsNotEmpty, IsIn, IsNumber, IsOptional } from 'class-validator';
 
 export class CreateRoleUserDto {
@@ -22,8 +22,9 @@ export class CreateRoleUserDto {
   @IsNumber()
   role: number;
 
+  @ApiProperty({ required: false })
   @IsOptional()
-  @Transform(({ value }) => (value ? parseInt(value) : undefined))
+  @Type(() => Number)
   @IsNumber()
-  branchId?: number;
+  branchId: number;
 }
