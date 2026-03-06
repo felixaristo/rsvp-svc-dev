@@ -88,6 +88,9 @@ export class Tenant {
   @Column({ name: 'minimum_dp', type: 'int', nullable: true })
   minimumDP: number;
 
+  @Column({ name: 'minimum_payment', type: 'int', nullable: true })
+  minimumPayment: number;
+
   @Column({ name: 'minimum_percentage', type: 'int', nullable: true })
   minimumPercentage: number;
 

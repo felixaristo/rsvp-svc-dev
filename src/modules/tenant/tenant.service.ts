@@ -88,6 +88,7 @@ export class TenantService {
         'bankName',
         'minimumPax',
         'minimumDP',
+        'minimumPayment',
         'minimumPercentage',
       ],
     });

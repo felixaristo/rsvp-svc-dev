@@ -129,6 +129,10 @@ export class CreateTenantDto {
   @IsOptional()
   minimumDP?: number;
 
+  @ApiPropertyOptional({ example: 100000 })
+  @IsOptional()
+  minimumPayment?: number;
+
   @ApiPropertyOptional({ example: 50 })
   @IsOptional()
   minimumPercentage?: number;
